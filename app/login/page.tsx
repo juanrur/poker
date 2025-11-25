@@ -1,33 +1,10 @@
-// app/login/page.jsx
-import { createCliente } from '@/app/'
-import { cookies } from 'next/headers'
+import { createClient } from '@/app/db/create-server-client'
 import { redirect } from 'next/navigation'
 
 export default function LoginPage() {
-  async function handleGitHubSignIn(formData) {
+  async function handleGitHubSignIn(formData: FormData) {
     'use server'
-    
-    const cookieStore = cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            } catch {
-              // El middleware maneja las cookies
-            }
-          },
-        },
-      }
-    )
+    const supabase = await createClient()
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
