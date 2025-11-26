@@ -1,14 +1,13 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.DB_URL;
-const supabaseKey = process.env.DB_PUBLISHABLE_KEY;
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Key:', supabaseKey);
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('supabaseUrl and supabaseKey are required.');
-}
+import { createBrowserClient as createSupabaseClient } from '@supabase/ssr';
 
 export function createClient() {
-  return createSupabaseClient(supabaseUrl, supabaseKey);
+  return createSupabaseClient(
+    "https://jqadyqbncdmehtgpyqbj.supabase.co", "sb_publishable_fwmwILtbQ36bm1ZF7zfCaw_GaW_XDBJ",
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    } 
+  )
 }

@@ -1,12 +1,16 @@
 'use client'
 import { useEffect, useState } from "react";
 import { createClient } from "../db/create-client-client"
-import { v4 as uuid } from 'uuid';
 import { redirect } from "next/navigation";
 
-export default function CreateGameButton() {
+export default function JoinGameButton() {
   const supabase = createClient()
   const [userID, setUserID] = useState<string | null>(null);
+  const [gameID, setGameID] = useState<string>("");
+
+  function handleChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    setGameID(event.target.value);
+  }
   
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -20,23 +24,23 @@ export default function CreateGameButton() {
   }, [supabase])
 
   if (!userID) {
-    return <div>Please log in to create a game.</div>
+    return <div>Please log in to join a game.</div>
   }
 
-  async function handleCreateGame() {
-    console.log("Creating a new game...")
-    const newGameID = uuid()
-    await supabase.from('games').insert({id: newGameID})
-    const { error: playerError } = await supabase.from('players').insert({ id: userID, game: newGameID });
+  async function handleJoinGame(gameId: string) {
+    const { error: playerError } = await supabase.from('players').insert({ id: userID, game: gameId });
     if (playerError) {
       console.error("Error creando player:", playerError);
       alert(playerError.message); // Esto te mostrará el mensaje exacto
       return;
     }
-    redirect(`/game/${newGameID}`)
+    redirect(`/game/${gameId}`)
   }
 
   return (
-    <button onClick={handleCreateGame}>Create a game</button>
+    <>
+      <button onClick={() => handleJoinGame(gameID)}>Join a game</button>
+      <textarea name="gameId" id="gameId" onChange={handleChange}></textarea>
+    </>
   )
 }
