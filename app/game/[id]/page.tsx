@@ -10,11 +10,11 @@ import { createClient } from "@/app/db/create-client-client";
 export default function Home() {
   const [game, setGame] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([]);
+  const supabase = createClient()
 
   const params = useParams();
   useEffect(() => {
     async function fetchData() {
-      const supabase = createClient()
       try {
         const { data } = await supabase
           .from('games')
@@ -32,6 +32,7 @@ export default function Home() {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'games' },
           (payload) => {
+            console.log(payload)
             setGame(payload.new);
           }
       )
@@ -51,7 +52,7 @@ export default function Home() {
         console.error("Error fetching game data:", error);
       }
       
-      const channelsPlayers = supabase.channel('custom-all-channel')
+      const channelsPlayers = supabase.channel('custom-all-channel2')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'players' },
@@ -67,6 +68,13 @@ export default function Home() {
   const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
   const suits: suit[] = ["heart", "spade", "club", "diamond"];
 
+  const deck = [];
+
+  for(let i=0; i<52; i++) {
+    const card = { number: cardNumbers[i % 13], suit: suits[Math.floor(i / 13)] };
+    deck.push(card);
+  }
+
   function getRandomCard() {
     const randomNumber = Math.floor(Math.random() * (13 - 1 + 1)) + 1;
     const randomSuit = Math.floor(Math.random() * (4 - 1 + 1)) + 1;
@@ -76,22 +84,45 @@ export default function Home() {
   
   const [myCards, setMyCards] = useState<Card[]>([ getRandomCard(), getRandomCard() ]);
 
+
+  async function startGame() {
+    // turn player
+    const firstTurnPlayer = players[Math.floor(Math.random() * players.length)];
+    await supabase.from('games').update({ turn_player: firstTurnPlayer.id }).eq('id', params.id).select();
+    
+    // shuffle deck
+    const shuffledDeck = [...deck].sort(() => Math.random() - 0.5);
+    await supabase.from('games').update({ deck: shuffledDeck }).eq('id', params.id).select();
+
+    // deal cards to players
+    for (const player of players) {
+      const playerCards = [shuffledDeck.pop(), shuffledDeck.pop()];
+      await supabase.from('players').update({ cards: playerCards }).eq('id', player.id).select();
+    }
+
+    // update deck in game
+    await supabase.from('games').update({ deck: shuffledDeck }).eq('id', params.id).select();
+  }
+
   return (
-    <pre>
-      <h1>game: {JSON.stringify(game)}</h1>
-      <h1>players: {JSON.stringify(players)}</h1>
-    </pre>
+    <main className="flex flex-col items-center justify-center min-h-screen py-2">
+      <h1 className="my-4">{JSON.stringify(game)}</h1>
+      {players.map((player, idx) => (
+        <div key={player.id}>
+          <h2>Player {idx + 1}: {player.id}</h2>
+          <p>Cards: {JSON.stringify(player.cards)}</p>
+        </div>
+      ))}
 
-    // <main className="flex flex-col items-center justify-center min-h-screen py-2">
-    //   <h1 className="h-20">Poker{JSON.stringify(params)}</h1>
-    //   {/* <Table /> */}
+      <button onClick={startGame}>Iniciar juego</button>
+      {/* <Table /> */}
 
-    //   <MyCards cards={myCards}/>
-
-    //   {
-    //     !isFolded && isMyTurn &&
-    //     <Actions actualBet={actualBet} setActualBet={setActualBet} yourBet={yourBet} setYourBet={setYourBet} money={money} setMoney={setMoney} setIsFolded={setIsFolded}  />
-    //   }
-    // </main>
+      {/* <MyCards cards={myCards}/> */}
+{/* 
+      { !isFolded && isMyTurn &&
+        <Actions actualBet={actualBet} setActualBet={setActualBet} yourBet={yourBet} setYourBet={setYourBet} money={money} setMoney={setMoney} setIsFolded={setIsFolded}  />
+      }
+       */}
+    </main>
   );
 }
