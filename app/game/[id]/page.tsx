@@ -12,24 +12,27 @@ export default function Home() {
   const [players, setPlayers] = useState<any[]>([]);
   const supabase = createClient()
 
-  const setupPresence = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return;
-    const presenceChannel = supabase.channel('online-channel', {
-      config: {
-        presence: {
-          key: user.id,
-        },
-      },
-    })
-      
-    presenceChannel.on('presence', { event: 'leave' }, () => {
-      
-    })
-  }
-
   const params = useParams();
+
   useEffect(() => {
+    async function insertUserIntoGame() {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) return
+
+      const userInGame = players.find(player => player.id === user.id)
+
+      if (!userInGame) {
+        const { error: playerError } = await supabase.from('players').insert({ id: user.id, game: params.id })
+        if (playerError) {
+          console.error("Error creando player:", playerError)
+          alert(playerError.message); // Esto te mostrará el mensaje exacto
+          return
+        }
+      }
+    }
+    insertUserIntoGame()
+
     async function fetchData() {
       try {
         const { data } = await supabase
@@ -73,12 +76,52 @@ export default function Home() {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'players' },
           (payload) => {
-            setGame(payload.new);
+            setPlayers(payload.new);
           }
       )
       .subscribe()
     }
     fetchData();
+
+    const setupPresence = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+      const channel = supabase.channel('room-presence', {
+        config: {
+          presence: {
+            key: user.id 
+          }
+        }
+      })
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        leftPresences.forEach(async (user) => {
+          console.log(`Usuario ${user.user_id} dejó la sala`);
+          await supabase.from('players').delete().eq('id', user.user_id);
+        });
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+            game_id: params.id
+          })
+          console.log('✅ Te has unido a la sala de presencia');
+        }
+    });
+
+    return channel;
+    };
+
+    let channelObserver: any
+    setupPresence().then((channel) => channelObserver = channel)
+
+    return () => {
+      if (channelObserver) channelObserver.unsubscribe()
+    }
+
   }, [params]);
   
   const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
