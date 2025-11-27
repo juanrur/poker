@@ -12,6 +12,22 @@ export default function Home() {
   const [players, setPlayers] = useState<any[]>([]);
   const supabase = createClient()
 
+  const setupPresence = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return;
+    const presenceChannel = supabase.channel('online-channel', {
+      config: {
+        presence: {
+          key: user.id,
+        },
+      },
+    })
+      
+    presenceChannel.on('presence', { event: 'leave' }, () => {
+      
+    })
+  }
+
   const params = useParams();
   useEffect(() => {
     async function fetchData() {
