@@ -9,26 +9,30 @@ import { createClient } from "@/app/db/create-client-client";
 
 export default function Home() {
   const [game, setGame] = useState<any>(null);
-  const [players, setPlayers] = useState<any[]>([]);
+  const [players, setPlayers] = useState<any[]>([])
   const supabase = createClient()
 
   const params = useParams();
 
   useEffect(() => {
+    let initialLoadDone = false;
+      
     async function insertUserIntoGame() {
       const { data: { user } } = await supabase.auth.getUser()
-      
+      const { data } = await supabase
+        .from('players')
+        .select('*')
+        .eq('id', user?.id)
+        .eq('game', params.id)
+
+      if (data !== null && data?.length > 0) return; // Ya está en la tabla players
       if (!user) return
 
-      const userInGame = players.find(player => player.id === user.id)
-
-      if (!userInGame) {
-        const { error: playerError } = await supabase.from('players').insert({ id: user.id, game: params.id })
-        if (playerError) {
-          console.error("Error creando player:", playerError)
-          alert(playerError.message); // Esto te mostrará el mensaje exacto
-          return
-        }
+      const { error: playerError } = await supabase.from('players').insert({ id: user.id, game: params.id })
+      if (playerError) {
+        console.error("Error creando player:", playerError)
+        alert(playerError.message); // Esto te mostrará el mensaje exacto
+        return
       }
     }
     insertUserIntoGame()
@@ -71,12 +75,30 @@ export default function Home() {
         console.error("Error fetching game data:", error);
       }
       
+
       const channelsPlayers = supabase.channel('custom-all-channel2')
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'players' },
+           { 
+            event: '*', 
+            schema: 'public', 
+            table: 'players',
+            filter: `game=eq.${params.id}`  // ← FILTRAR POR JUEGO
+          },
           (payload) => {
-            setPlayers(payload.new);
+            setPlayers(prevPlayers => {
+              if (payload.eventType === 'INSERT') {
+                if (!initialLoadDone) return 
+                const exists = prevPlayers.some(player => player.id === payload.new.id);
+                if (exists) return prevPlayers; // No agregar si ya existe
+                return[...prevPlayers, payload.new]
+              }
+              if (payload.eventType === 'UPDATE'){
+                return prevPlayers.map(player=> 
+                  player.id === payload.new.id ? payload.new :  player
+                );
+              }
+            }); 
           }
       )
       .subscribe()
@@ -118,11 +140,13 @@ export default function Home() {
     let channelObserver: any
     setupPresence().then((channel) => channelObserver = channel)
 
+    initialLoadDone = true
+
     return () => {
       if (channelObserver) channelObserver.unsubscribe()
     }
 
-  }, [params]);
+  }, []);
   
   const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
   const suits: suit[] = ["heart", "spade", "club", "diamond"];
@@ -163,15 +187,22 @@ export default function Home() {
     await supabase.from('games').update({ deck: shuffledDeck }).eq('id', params.id).select();
   }
 
+  const myPlayer = players.find(player => player.id === supabase.auth.getUser().then(({ data: { user } }) => user?.id));
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen py-2">
-      <h1 className="my-4">{JSON.stringify(game)}</h1>
-      {players.map((player, idx) => (
-        <div key={player.id}>
-          <h2>Player {idx + 1}: {player.id}</h2>
-          <p>Cards: {JSON.stringify(player.cards)}</p>
-        </div>
-      ))}
+      <h1 className="my-4">ID: {game.id}</h1>
+      
+      {players &&
+        players.map((player, idx) => (
+          <div 
+          key={player?.id || `player-${idx}-${Date.now()}`} 
+          className="border p-4 m-2"> 
+            <h2>Player {idx + 1}: {player.id}</h2>
+            <p>Cards: {JSON.stringify(player.cards)}</p>
+          </div>
+        ))
+      }
 
       <button onClick={startGame}>Iniciar juego</button>
       {/* <Table /> */}

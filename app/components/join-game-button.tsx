@@ -31,7 +31,8 @@ export default function JoinGameButton() {
     const { error: playerError } = await supabase.from('players').insert({ id: userID, game: gameId });
     if (playerError) {
       console.error("Error creando player:", playerError);
-      alert(playerError.message); // Esto te mostrará el mensaje exacto
+      alert(playerError.message);
+      alert(userID) // Esto te mostrará el mensaje exacto
       return;
     }
     redirect(`/game/${gameId}`)
