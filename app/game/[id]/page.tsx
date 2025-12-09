@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Actions from "@/app/components/actions"
 import Table from "@/app/components/table";
 import { Card, cardNumber, suit } from "@/app/types";
@@ -11,14 +11,15 @@ export default function Home() {
   const [game, setGame] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([])
   const supabase = createClient()
-
+  const [user, setUser] = useState<any>() 
+  
   const params = useParams();
-
+  
   useEffect(() => {
+    supabase.auth.getUser().then(({ data : {user} }) => setUser(user));
     let initialLoadDone = false;
       
     async function insertUserIntoGame() {
-      const { data: { user } } = await supabase.auth.getUser()
       const { data } = await supabase
         .from('players')
         .select('*')
@@ -55,7 +56,6 @@ export default function Home() {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'games' },
           (payload) => {
-            console.log(payload)
             setGame(payload.new);
           }
       )
@@ -65,7 +65,8 @@ export default function Home() {
         const { data } = await supabase
           .from('players')
           .select('*')
-          .eq('game', params.id)
+          .eq('game', para\ms.id)
+          .order('created_at', { ascending: true })
 
           console.log(data)
 
@@ -91,25 +92,31 @@ export default function Home() {
                 if (!initialLoadDone) return 
                 const exists = prevPlayers.some(player => player.id === payload.new.id);
                 if (exists) return prevPlayers; // No agregar si ya existe
-                return[...prevPlayers, payload.new]
+                const newPlayers = [...prevPlayers, payload.new]
+                return newPlayers.sort()
               }
               if (payload.eventType === 'UPDATE'){
                 return prevPlayers.map(player=> 
                   player.id === payload.new.id ? payload.new :  player
                 );
               }
+              if (payload.eventType === 'DELETE'){
+                return prevPlayers.filter(player => player.id !== payload.old.id);
+              }
             }); 
           }
       )
       .subscribe()
-    }
-    fetchData();
 
+      return [channels, channelsPlayers]
+    }
+    
     const setupPresence = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) return;
-
+      
+     
       const channel = supabase.channel('room-presence', {
         config: {
           presence: {
@@ -138,11 +145,20 @@ export default function Home() {
     };
 
     let channelObserver: any
+    let channelsPlayers: any
+    let channelGame: any
+
     setupPresence().then((channel) => channelObserver = channel)
+    fetchData().then(([channelGameRespond, channelsPlayersRespond]) => { 
+      channelGame = channelGameRespond
+      channelsPlayers = channelsPlayersRespond
+    });
 
+    
     initialLoadDone = true
-
     return () => {
+      if (channelGame) channelGame.unsubscribe()
+      if (channelsPlayers) channelsPlayers.unsubscribe()
       if (channelObserver) channelObserver.unsubscribe()
     }
 
@@ -172,6 +188,23 @@ export default function Home() {
     // turn player
     const firstTurnPlayer = players[Math.floor(Math.random() * players.length)];
     await supabase.from('games').update({ turn_player: firstTurnPlayer.id }).eq('id', params.id).select();
+    const index = players.findIndex(player => player.id === firstTurnPlayer.id)
+    let count = index
+    let dealer
+    let small_blind
+    let big_blind
+    for (let i = 2; i >= 0 ; i--) {
+      if(count === -1) count = players.length - 1
+      if(i === 2) big_blind = players[count]
+      if(i === 1) small_blind = players[count]
+      if(i === 0) dealer = players[count] 
+
+      count--
+    }
+
+    await supabase.from('players').update({ bet: game.small_blind }).eq('id', small_blind.id).select()
+    await supabase.from('players').update({ bet: game.small_blind*2 }).eq('id', big_blind.id).select()
+    await supabase.from('games').update({ actual_bet: game.small_blind*2 }).eq('id', params.id).select()
     
     // shuffle deck
     const shuffledDeck = [...deck].sort(() => Math.random() - 0.5);
@@ -187,32 +220,82 @@ export default function Home() {
     await supabase.from('games').update({ deck: shuffledDeck }).eq('id', params.id).select();
   }
 
-  const myPlayer = players.find(player => player.id === supabase.auth.getUser().then(({ data: { user } }) => user?.id));
+  const myPlayer = players.find(player => player.id === user.id);
+  const isMyTurn = game?.turn_player === myPlayer?.id;
+
+  const sortedPlayers = useMemo(() => {
+    return [...players].sort((a, b) => {
+      // Si hay created_at, ordénalo por eso
+      if (a.created_at && b.created_at) {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      // Si no, por id como fallback
+      return a.id.localeCompare(b.id);
+    });
+  }, [players]);
+
+  
+  async function setYourBet (bet: number) {
+    await supabase.from('players').update(bet).eq('id', myPlayer.id).select() 
+  }
+
+  async function setActualBet (bet: number) {
+    await supabase.from('game').update({'actual_bet': bet }).eq('id', params.id).select()
+  }
+
+  async function setIsFolded () {
+    await supabase.from('players').update({is_folded: true}).eq('id', myPlayer.id).select()
+  }
+
+  async function nextTurn () {
+    const myPlayerIndex = players.findIndex(player => player.id === myPlayer.id)
+    const nextPlayer = players[myPlayerIndex + 1] ? players[myPlayerIndex + 1] : players[0] 
+    console.log(nextPlayer.id)
+    await supabase.from('games').update({turn_player: nextPlayer.id}).eq('id', params.id).select()
+  }
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen py-2">
-      <h1 className="my-4">ID: {game.id}</h1>
+      {
+        game &&
+        <>
+          <h1 className="my-4">ID: {game.id}</h1>
+          <span>
+            {game.actual_bet}
+          </span>
+        </>
+      }
       
-      {players &&
-        players.map((player, idx) => (
+      {sortedPlayers &&
+        sortedPlayers.map((player, idx) => (
           <div 
           key={player?.id || `player-${idx}-${Date.now()}`} 
           className="border p-4 m-2"> 
             <h2>Player {idx + 1}: {player.id}</h2>
             <p>Cards: {JSON.stringify(player.cards)}</p>
+            <span>{JSON.stringify(player.bet)}</span>
+            <p>{JSON.stringify(player.money)}</p>
           </div>
         ))
       }
 
-      <button onClick={startGame}>Iniciar juego</button>
+      {
+        !game?.turn_player && 
+        <button onClick={startGame}>Iniciar juego</button>
+      }
+      
       {/* <Table /> */}
 
       {/* <MyCards cards={myCards}/> */}
-{/* 
-      { !isFolded && isMyTurn &&
-        <Actions actualBet={actualBet} setActualBet={setActualBet} yourBet={yourBet} setYourBet={setYourBet} money={money} setMoney={setMoney} setIsFolded={setIsFolded}  />
-      }
-       */}
+
+
+      { !myPlayer?.is_folded && isMyTurn &&
+        <Actions actualBet={game?.actual_bet}  yourBet={myPlayer?.bet}  money={myPlayer?.money} 
+        setYourBet={setYourBet} setActualBet={setActualBet} setIsFolded={setIsFolded}  nextTurn={nextTurn}
+        />
+      } 
+      
+      
     </main>
   );
 }
