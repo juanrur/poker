@@ -14,8 +14,39 @@ export default function Home() {
   const supabase = createClient()
   const [user, setUser] = useState<any>() 
   const initialLoadDone = useRef(false);
+  const myPlayer = players.find(player => player.id === user.id)
+  
+  const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+  const suits: suit[] = ["heart", "spade", "club", "diamond"];
+  const deck = [];
+
+  for(let i=0; i<52; i++) {
+    const card = { number: cardNumbers[i % 13], suit: suits[Math.floor(i / 13)] };
+    deck.push(card);
+  }
   
   const params = useParams();
+
+  useEffect(() => {
+    if (!game) return
+    if(!user) return
+    if(!game.deck) return 
+    if (game.dealer === user.id) return 
+
+    async function newStreet () {
+      const newDeck = game.deck
+      const shuffledDeck = [...newDeck].sort(() => Math.random() - 0.5);
+      const newCards = [shuffledDeck.pop(), shuffledDeck.pop()]
+      await supabase.from('games').update({cards: newCards}).eq('id', params.id).select()
+      await supabase.from('games').update({deck: newDeck}).eq('id', params.id).select()
+      const actualStreet = game.street + 1
+      await supabase.from('games').update({street: actualStreet}).eq('id', params.id).select()
+      
+    }
+
+    newStreet()
+    // se puede optimizar para cada vez que me toque a mi
+  }, game.turn_player)
   
   useEffect(() => {
     supabase.auth.getUser().then(({ data : {user} }) => setUser(user));
@@ -169,15 +200,7 @@ export default function Home() {
     };
   }, [user])
   
-  const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-  const suits: suit[] = ["heart", "spade", "club", "diamond"];
 
-  const deck = [];
-
-  for(let i=0; i<52; i++) {
-    const card = { number: cardNumbers[i % 13], suit: suits[Math.floor(i / 13)] };
-    deck.push(card);
-  }
 
   function getRandomCard() {
     const randomNumber = Math.floor(Math.random() * (13 - 1 + 1)) + 1;
@@ -204,6 +227,7 @@ export default function Home() {
       count--
     }
 
+    await supabase.from('games').update({ dealer: user.id }).eq('id', params.id).select()
     await supabase.from('players').update({ bet: game.small_blind }).eq('id', small_blind.id).select()
     await supabase.from('players').update({ bet: game.small_blind*2 }).eq('id', big_blind.id).select()
     await supabase.from('games').update({ actual_bet: game.small_blind*2 }).eq('id', params.id).select()
@@ -222,7 +246,7 @@ export default function Home() {
     await supabase.from('games').update({ deck: shuffledDeck }).eq('id', params.id).select();
   }
 
-  const myPlayer = players.find(player => player.id === user.id);
+ 
   const isMyTurn = game?.turn_player === myPlayer?.id;
 
   const sortedPlayers = useMemo(() => {
@@ -285,6 +309,7 @@ export default function Home() {
         <>
           <h1 className="my-4">ID: {game.id}</h1>
           <button onClick={copyID}>copy</button>
+          <h1>{game.cards}</h1>
           <span>
             {game.actual_bet}
           </span>

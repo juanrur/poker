@@ -34,6 +34,17 @@ export default function Actions({
     nextTurn()
   }
 
+  const handlePass = () => {
+    nextTurn()
+  }
+  
+  const handleEqualize = () => {
+    setYourBet(actualBet)
+    nextTurn()
+  }
+
+  console.log({yourBet, actualBet})
+
   return (
     <div className="flex gap-4">
       <button onClick={() => setIncrementVisibility(value => !value)}>Subir</button>
@@ -47,8 +58,11 @@ export default function Actions({
           <button onClick={handleIncrementBet}>increment</button>
         </div>
       }
-      {yourBet < actualBet && 
-        <button>Pasar</button>
+      {yourBet < actualBet &&
+        <button onClick={handleEqualize}>Igualar</button>
+      }
+      { yourBet === actualBet && 
+        <button onClick={handlePass}>Pasar</button>
       }
       <button onClick={() => setIsFolded(true)}>Foldear</button>
     </div>
