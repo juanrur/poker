@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Actions from "@/app/components/actions"
 import Table from "@/app/components/table";
 import { Card, cardNumber, suit } from "@/app/types";
@@ -13,12 +13,13 @@ export default function Home() {
   const [players, setPlayers] = useState<any[]>([])
   const supabase = createClient()
   const [user, setUser] = useState<any>() 
+  const initialLoadDone = useRef(false);
   
   const params = useParams();
   
   useEffect(() => {
     supabase.auth.getUser().then(({ data : {user} }) => setUser(user));
-    let initialLoadDone = false;
+    initialLoadDone.current = false
       
     async function insertUserIntoGame() {
       const { data } = await supabase
@@ -88,6 +89,12 @@ export default function Home() {
             filter: `game=eq.${params.id}`  // ← FILTRAR POR JUEGO
           },
           (payload) => {
+            console.log('=== PLAYER CHANGE EVENT ===');
+            console.log('Event type:', payload.eventType);
+            console.log('Full payload:', JSON.stringify(payload, null, 2));
+            console.log('Old data (for DELETE):', payload.old);
+            console.log('New data (for INSERT/UPDATE):', payload.new);
+              
             setPlayers(prevPlayers => {
               if (payload.eventType === 'INSERT') {
                 if (!initialLoadDone) return 
@@ -102,17 +109,24 @@ export default function Home() {
                 );
               }
               if (payload.eventType === 'DELETE'){
+                console.log('payload: ' + payload.old.id)
                 return prevPlayers.filter(player => player.id !== payload.old.id);
               }
             }); 
           }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Players channel status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Canal de players suscrito exitosamente');
+          // Marcar que la carga inicial ya pasó
+          initialLoadDone.current = true;
+          console.log('initialLoadDone establecido a true');
+        }
+      })
 
       return [channels, channelsPlayers]
     }
-    
-   
 
     let channelsPlayers: any
     let channelGame: any
@@ -123,7 +137,6 @@ export default function Home() {
     });
 
     
-    initialLoadDone = true
     return () => {
       if (channelGame) channelGame.unsubscribe()
       if (channelsPlayers) channelsPlayers.unsubscribe()
@@ -132,23 +145,27 @@ export default function Home() {
   }, []);
 
   useEffect( () => {
+    const handleDeletePlayer = () => {
+      console.log("borrando a: " + user.id)
+      deletePlayer()
+    }
+
     // close this window with whatever way - pc
-    window.addEventListener('beforeunload', deletePlayer)
+    window.addEventListener('beforeunload', handleDeletePlayer)
     // close this window with whatever way - mobile
-    window.addEventListener('pagehide', deletePlayer);
+    window.addEventListener('pagehide', handleDeletePlayer);
     
     // change router.push to do delete player whenever you change the page (navegues)
     const originalPush = router.push;
     router.push = (...args: [url: URL, as?: URL | undefined, options?: any | undefined]) => {
-      deletePlayer();
+      handleDeletePlayer();
       return originalPush.apply(router, args);
     };
 
     return () => {
-      window.removeEventListener('beforeunload', deletePlayer)
-      window.removeEventListener('pagehide', deletePlayer)
+      window.removeEventListener('beforeunload', handleDeletePlayer)
+      window.removeEventListener('pagehide', handleDeletePlayer)
       router.push = originalPush;
-      deletePlayer()
     };
   }, [user])
   

@@ -5,7 +5,9 @@ export async function POST (request: Request) {
     const { userId } = await request.json()
     
     const supabase = await createClient()
-    supabase.from('players').delete().eq('id',  userId)
+    const { error } = await supabase.from('players').delete().eq('id',  userId)
+    if (error) return new Response('Error deleting user', {status: 500})
+
     return new Response('OK', {status: 200})
   }catch (error) {
     console.error(error)
