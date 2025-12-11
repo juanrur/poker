@@ -4,8 +4,9 @@ import Actions from "@/app/components/actions"
 import Table from "@/app/components/table";
 import { Card, cardNumber, suit } from "@/app/types";
 import MyCards from "@/app/components/my-cards";
-import { useParams } from "next/navigation";
+import { redirect, useParams } from "next/navigation";
 import { createClient } from "@/app/db/create-client-client";
+import router from "next/router";
 
 export default function Home() {
   const [game, setGame] = useState<any>(null);
@@ -65,7 +66,7 @@ export default function Home() {
         const { data } = await supabase
           .from('players')
           .select('*')
-          .eq('game', para\ms.id)
+          .eq('game', params.id)
           .order('created_at', { ascending: true })
 
           console.log(data)
@@ -111,44 +112,11 @@ export default function Home() {
       return [channels, channelsPlayers]
     }
     
-    const setupPresence = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
-      
-     
-      const channel = supabase.channel('room-presence', {
-        config: {
-          presence: {
-            key: user.id 
-          }
-        }
-      })
-      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        leftPresences.forEach(async (user) => {
-          console.log(`Usuario ${user.user_id} dejó la sala`);
-          await supabase.from('players').delete().eq('id', user.user_id);
-        });
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            user_id: user.id,
-            online_at: new Date().toISOString(),
-            game_id: params.id
-          })
-          console.log('✅ Te has unido a la sala de presencia');
-        }
-    });
+   
 
-    return channel;
-    };
-
-    let channelObserver: any
     let channelsPlayers: any
     let channelGame: any
 
-    setupPresence().then((channel) => channelObserver = channel)
     fetchData().then(([channelGameRespond, channelsPlayersRespond]) => { 
       channelGame = channelGameRespond
       channelsPlayers = channelsPlayersRespond
@@ -159,10 +127,30 @@ export default function Home() {
     return () => {
       if (channelGame) channelGame.unsubscribe()
       if (channelsPlayers) channelsPlayers.unsubscribe()
-      if (channelObserver) channelObserver.unsubscribe()
     }
 
   }, []);
+
+  useEffect( () => {
+    // close this window with whatever way - pc
+    window.addEventListener('beforeunload', deletePlayer)
+    // close this window with whatever way - mobile
+    window.addEventListener('pagehide', deletePlayer);
+    
+    // change router.push to do delete player whenever you change the page (navegues)
+    const originalPush = router.push;
+    router.push = (...args: [url: URL, as?: URL | undefined, options?: any | undefined]) => {
+      deletePlayer();
+      return originalPush.apply(router, args);
+    };
+
+    return () => {
+      window.removeEventListener('beforeunload', deletePlayer)
+      window.removeEventListener('pagehide', deletePlayer)
+      router.push = originalPush;
+      deletePlayer()
+    };
+  }, [user])
   
   const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
   const suits: suit[] = ["heart", "spade", "club", "diamond"];
@@ -180,9 +168,6 @@ export default function Home() {
 
     return { number: cardNumbers[randomNumber - 1], suit: suits[randomSuit - 1] };
   }
-  
-  const [myCards, setMyCards] = useState<Card[]>([ getRandomCard(), getRandomCard() ]);
-
 
   async function startGame() {
     // turn player
@@ -234,17 +219,29 @@ export default function Home() {
     });
   }, [players]);
 
-  
+  function deletePlayer () {
+    fetch('/api/delete-player/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        userId: user?.id
+      }),
+      keepalive: true
+    })
+    .catch((error) => console.log(error))
+  }
+
   async function setYourBet (bet: number) {
-    await supabase.from('players').update(bet).eq('id', myPlayer.id).select() 
+    await supabase.from('players').update({ bet: bet }).eq('id', myPlayer.id).select() 
   }
 
   async function setActualBet (bet: number) {
-    await supabase.from('game').update({'actual_bet': bet }).eq('id', params.id).select()
+    await supabase.from('games').update({actual_bet: bet }).eq('id', params.id).select()
   }
 
   async function setIsFolded () {
     await supabase.from('players').update({is_folded: true}).eq('id', myPlayer.id).select()
+    nextTurn()
   }
 
   async function nextTurn () {
@@ -254,12 +251,23 @@ export default function Home() {
     await supabase.from('games').update({turn_player: nextPlayer.id}).eq('id', params.id).select()
   }
 
+  function copyID () {
+    navigator.clipboard.writeText(game.id)
+  }
+
+  function handleGoOut () {
+    deletePlayer()
+    return redirect('/')
+  }
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen py-2">
+      <button className="border border-white p-3 absolute top-2 left-2 rounded" onClick={handleGoOut}>salir</button>
       {
         game &&
         <>
           <h1 className="my-4">ID: {game.id}</h1>
+          <button onClick={copyID}>copy</button>
           <span>
             {game.actual_bet}
           </span>
@@ -272,7 +280,10 @@ export default function Home() {
           key={player?.id || `player-${idx}-${Date.now()}`} 
           className="border p-4 m-2"> 
             <h2>Player {idx + 1}: {player.id}</h2>
-            <p>Cards: {JSON.stringify(player.cards)}</p>
+            {
+              player.cards &&
+              <p>Cards: {player?.cards[0]?.number} of {player?.cards[0]?.suit}, {player?.cards[1]?.number} of {player?.cards[1]?.suit}</p>
+            }
             <span>{JSON.stringify(player.bet)}</span>
             <p>{JSON.stringify(player.money)}</p>
           </div>
