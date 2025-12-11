@@ -21,6 +21,7 @@ export default function Actions({
 }) {
 
   const [increment, setIncrement] = useState(actualBet ? actualBet*2: 20)
+  const [incrementVisibility, setIncrementVisibility] = useState(false)
 
   useEffect(() => {
     setIncrement(actualBet*2)
@@ -35,9 +36,9 @@ export default function Actions({
 
   return (
     <div className="flex gap-4">
-      <button>Subir</button>
+      <button onClick={() => setIncrementVisibility(value => !value)}>Subir</button>
       {
-        actualBet &&
+        actualBet && incrementVisibility &&
         <div className="grid grid-rows-2">
           <div>
             <input type="range" name="increment" onChange={(event) => setIncrement(Number(event.target.value))} defaultValue={increment} max={money} min={actualBet+20}/>
