@@ -35,18 +35,24 @@ export default function Home() {
 
     async function newStreet () {
       const newDeck = game.deck
-      const shuffledDeck = [...newDeck].sort(() => Math.random() - 0.5);
-      const newCards = [shuffledDeck.pop(), shuffledDeck.pop()]
-      await supabase.from('games').update({cards: newCards}).eq('id', params.id).select()
-      await supabase.from('games').update({deck: newDeck}).eq('id', params.id).select()
+      const shuffledNewDeck = [...newDeck].sort(() => Math.random() - 0.5)
+      let newCards : any = []
+      if (game.street === 0) newCards = [shuffledNewDeck.pop(), shuffledNewDeck.pop(), shuffledNewDeck.pop()]
+      else newCards = [shuffledNewDeck.pop(), shuffledNewDeck.pop()]
+
+      const cards = [...game.cards, ...newCards]
+
+      await supabase.from('games').update({cards: cards}).eq('id', params.id).select()
+      await supabase.from('games').update({deck: shuffledNewDeck}).eq('id', params.id).select()
       const actualStreet = game.street + 1
       await supabase.from('games').update({street: actualStreet}).eq('id', params.id).select()
       
     }
 
     newStreet()
+
     // se puede optimizar para cada vez que me toque a mi
-  }, game.turn_player)
+  }, [game?.turn_player])
   
   useEffect(() => {
     supabase.auth.getUser().then(({ data : {user} }) => setUser(user));
@@ -309,7 +315,7 @@ export default function Home() {
         <>
           <h1 className="my-4">ID: {game.id}</h1>
           <button onClick={copyID}>copy</button>
-          <h1>{game.cards}</h1>
+          <h1>{JSON.stringify(game.cards)}</h1>
           <span>
             {game.actual_bet}
           </span>
