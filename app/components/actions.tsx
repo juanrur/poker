@@ -6,11 +6,14 @@ export default function Actions({
   actualBet,
   yourBet,
   money,
+  hasIncremented,
   setActualBet,
   setYourBet,
   setIsFolded,
   nextTurn
 }: {
+  user: any;
+  hasIncremented: () => void;
   actualBet: number;
   yourBet: number;
   money: number;
@@ -31,6 +34,8 @@ export default function Actions({
     if (increment > money) return;
     setYourBet(increment);
     setActualBet(increment)
+    hasIncremented()
+    
     nextTurn()
   }
 
@@ -42,8 +47,6 @@ export default function Actions({
     setYourBet(actualBet)
     nextTurn()
   }
-
-  console.log({yourBet, actualBet})
 
   return (
     <div className="flex gap-4">

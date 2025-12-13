@@ -27,27 +27,42 @@ export default function Home() {
   
   const params = useParams();
 
+  async function newStreet () {
+    const newDeck = game.deck
+    const shuffledNewDeck = [...newDeck].sort(() => Math.random() - 0.5)
+    let newCards : any = []
+    if (game.street === 0) newCards = [shuffledNewDeck.pop(), shuffledNewDeck.pop(), shuffledNewDeck.pop()]
+    else newCards = [shuffledNewDeck.pop()]
+
+    if(newCards.length === 0) return
+    if(newCards[0] === undefined) return
+
+    const cards = game?.cards ?  [...game?.cards, ...newCards] : newCards
+
+    try { 
+      await supabase.from('games').update({cards: cards}).eq('id', params.id).select()
+      await supabase.from('games').update({deck: shuffledNewDeck}).eq('id', params.id).select()
+      await supabase.from('games').update({turn_player: game.dealer}).eq('id', params.id).select()
+      const actualStreet = game.street + 1
+      await supabase.from('games').update({street: actualStreet}).eq('id', params.id).select()
+      await supabase.from('games').update({has_incremented: false}).eq('id', params.id).select()
+    
+    } catch (error) {
+      console.error("Error updating game for new street:", error);
+    }
+  }
+  
   useEffect(() => {
+    console.log("turn player changed:", game?.turn_player)
+    
     if (!game) return
     if(!user) return
     if(!game.deck) return 
-    if (game.dealer === user.id) return 
-
-    async function newStreet () {
-      const newDeck = game.deck
-      const shuffledNewDeck = [...newDeck].sort(() => Math.random() - 0.5)
-      let newCards : any = []
-      if (game.street === 0) newCards = [shuffledNewDeck.pop(), shuffledNewDeck.pop(), shuffledNewDeck.pop()]
-      else newCards = [shuffledNewDeck.pop(), shuffledNewDeck.pop()]
-
-      const cards = [...game.cards, ...newCards]
-
-      await supabase.from('games').update({cards: cards}).eq('id', params.id).select()
-      await supabase.from('games').update({deck: shuffledNewDeck}).eq('id', params.id).select()
-      const actualStreet = game.street + 1
-      await supabase.from('games').update({street: actualStreet}).eq('id', params.id).select()
-      
-    }
+    if(game.turn_player !== user.id) return
+    if(!players.every(player => player.bet === game.bet || !player.is_folded )) return
+    if(!game.has_incremented && game.turn_player !== game.dealer) return
+    console.log("new street triggered")
+   
 
     newStreet()
 
@@ -152,8 +167,9 @@ export default function Home() {
             }); 
           }
       )
-      .subscribe((status) => {
+      .subscribe((status, error) => {
         console.log('Players channel status:', status);
+        if(error) console.error('Players channel error:', error);
         if (status === 'SUBSCRIBED') {
           console.log('Canal de players suscrito exitosamente');
           // Marcar que la carga inicial ya pasó
@@ -218,7 +234,6 @@ export default function Home() {
   async function startGame() {
     // turn player
     const firstTurnPlayer = players[Math.floor(Math.random() * players.length)];
-    await supabase.from('games').update({ turn_player: firstTurnPlayer.id }).eq('id', params.id).select();
     const index = players.findIndex(player => player.id === firstTurnPlayer.id)
     let count = index
     let dealer
@@ -229,11 +244,12 @@ export default function Home() {
       if(i === 2) big_blind = players[count]
       if(i === 1) small_blind = players[count]
       if(i === 0) dealer = players[count] 
-
+      
       count--
     }
-
-    await supabase.from('games').update({ dealer: user.id }).eq('id', params.id).select()
+    
+    await supabase.from('games').update({ turn_player: small_blind.id }).eq('id', params.id).select();
+    await supabase.from('games').update({ dealer: small_blind.id }).eq('id', params.id).select()
     await supabase.from('players').update({ bet: game.small_blind }).eq('id', small_blind.id).select()
     await supabase.from('players').update({ bet: game.small_blind*2 }).eq('id', big_blind.id).select()
     await supabase.from('games').update({ actual_bet: game.small_blind*2 }).eq('id', params.id).select()
@@ -292,10 +308,19 @@ export default function Home() {
   }
 
   async function nextTurn () {
+    if(players.every(player => player.bet === game.bet || !player.is_folded && game.has_incremented )) {
+      newStreet()
+      return
+    }
+
+    console.log("next turn called")
     const myPlayerIndex = players.findIndex(player => player.id === myPlayer.id)
     const nextPlayer = players[myPlayerIndex + 1] ? players[myPlayerIndex + 1] : players[0] 
-    console.log(nextPlayer.id)
     await supabase.from('games').update({turn_player: nextPlayer.id}).eq('id', params.id).select()
+  }
+
+  async function hasIncremented () {
+    await supabase.from('games').update({has_incremented: true}).eq('id', params.id).select()
   }
 
   function copyID () {
@@ -350,7 +375,7 @@ export default function Home() {
 
       { !myPlayer?.is_folded && isMyTurn &&
         <Actions actualBet={game?.actual_bet}  yourBet={myPlayer?.bet}  money={myPlayer?.money} 
-        setYourBet={setYourBet} setActualBet={setActualBet} setIsFolded={setIsFolded}  nextTurn={nextTurn}
+        setYourBet={setYourBet} setActualBet={setActualBet} setIsFolded={setIsFolded} hasIncremented={hasIncremented}  nextTurn={nextTurn}
         />
       } 
       
