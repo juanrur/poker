@@ -266,6 +266,9 @@ export default function Home() {
 
     // update deck in game
     await supabase.from('games').update({ deck: shuffledDeck }).eq('id', params.id).select();
+
+    // set has incremented to true
+    hasIncremented()
   }
 
  
