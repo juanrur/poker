@@ -18,7 +18,7 @@ export default function Actions({
   yourBet: number;
   money: number;
   setActualBet: (bet: number) => void;
-  setYourBet: (bet: number) => void;
+  setYourBet: (bet: number) => Promise<any>;
   setIsFolded : (isFolded: boolean) => void;
   nextTurn: () => void
 }) {
@@ -43,8 +43,8 @@ export default function Actions({
     nextTurn()
   }
   
-  const handleEqualize = () => {
-    setYourBet(actualBet)
+  const handleEqualize = async () => {
+    await setYourBet(actualBet)
     nextTurn()
   }
 

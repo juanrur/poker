@@ -54,13 +54,27 @@ export default function Home() {
   
   useEffect(() => {
     console.log("turn player changed:", game?.turn_player)
+
+    console.log({
+      gameExists: !game,
+      userExists: !user,
+      deckExists: !game?.deck,
+      turnIsUser: game?.turn_player !== user?.id,
+      // player === game o is_folded
+      playersMatched: !players.every(player => player.bet === game?.actual_bet || player.is_folded),
+      hasIncrementedOrDealer: !game?.has_incremented || game?.turn_player !== game?.dealer,
+      overall: !!game && !!user && !!game?.deck && game?.turn_player === user?.id && players.every(player => player.bet === game?.bet || player.is_folded) && (game?.has_incremented || game?.turn_player === game?.dealer)
+    })
+
+    console.log({ players })
     
     if (!game) return
     if(!user) return
-    if(!game.deck) return 
-    if(game.turn_player !== user.id) return
-    if(!players.every(player => player.bet === game.bet || !player.is_folded )) return
+    if(!game?.deck) return 
+    if(game?.turn_player !== user?.id) return
+    if(!players.every(player => player.bet === game.actual_bet || player.is_folded )) return
     if(!game.has_incremented && game.turn_player !== game.dealer) return
+    
     console.log("new street triggered")
    
 
@@ -298,7 +312,8 @@ export default function Home() {
   }
 
   async function setYourBet (bet: number) {
-    await supabase.from('players').update({ bet: bet }).eq('id', myPlayer.id).select() 
+    const {data} = await supabase.from('players').update({ bet: bet }).eq('id', myPlayer.id).select() 
+    return data
   }
 
   async function setActualBet (bet: number) {
@@ -311,11 +326,14 @@ export default function Home() {
   }
 
   async function nextTurn () {
-    if(players.every(player => player.bet === game.bet || !player.is_folded && game.has_incremented )) {
+    console.log({game}, {players})
+    console.log(players.every(player => player.bet === game?.actual_bet || player.is_folded && game.has_incremented ))
+    if(players.every(player => player.bet === game?.actual_bet || player.is_folded && game.has_incremented )) {
+      console.log("all players have matched the bet, new street")
       newStreet()
       return
     }
-
+      
     console.log("next turn called")
     const myPlayerIndex = players.findIndex(player => player.id === myPlayer.id)
     const nextPlayer = players[myPlayerIndex + 1] ? players[myPlayerIndex + 1] : players[0] 
@@ -353,9 +371,12 @@ export default function Home() {
       {sortedPlayers &&
         sortedPlayers.map((player, idx) => (
           <div 
-          key={player?.id || `player-${idx}-${Date.now()}`} 
-          className="border p-4 m-2"> 
-            <h2>Player {idx + 1}: {player.id}</h2>
+            key={player?.id || `player-${idx}-${Date.now()}`} 
+            className="p-4 m-2 text-sm"
+          > 
+            <h2 className="border size-fit p-2 rounded-full text-[1rem]">Player {idx + 1} </h2>
+            <span>{player?.id}</span>
+            <p> {player.id === game?.turn_player && "(turn)" } {player.id === game?.dealer && "(dealer)" }</p>
             {
               player.cards &&
               <p>Cards: {player?.cards[0]?.number} of {player?.cards[0]?.suit}, {player?.cards[1]?.number} of {player?.cards[1]?.suit}</p>
