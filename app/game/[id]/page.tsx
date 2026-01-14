@@ -84,8 +84,12 @@ export default function Home() {
   }, [game?.turn_player])
   
   useEffect(() => {
-    supabase.auth.getUser().then(({ data : {user} }) => setUser(user));
-    initialLoadDone.current = false
+    supabase.auth.getUser().then(({ data : {user} }) => {
+      setUser(user)
+      initialLoadDone.current = false
+      
+      insertUserIntoGame() 
+    });
       
     async function insertUserIntoGame() {
       const { data } = await supabase
@@ -104,7 +108,6 @@ export default function Home() {
         return
       }
     }
-    insertUserIntoGame()
 
     async function fetchData() {
       try {

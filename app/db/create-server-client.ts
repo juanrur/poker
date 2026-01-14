@@ -6,7 +6,7 @@ export async function createClient() {
 
   return createServerClient(
     "https://jqadyqbncdmehtgpyqbj.supabase.co",
-    "sb_publishable_SVYt4iDnf6eQ-m3CkEaw4Q_PbIGICD-"  ,
+    "sb_publishable_fwmwILtbQ36bm1ZF7zfCaw_GaW_XDBJ"  ,
     {
       cookies: {
         getAll() {
