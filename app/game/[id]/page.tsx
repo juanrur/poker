@@ -11,7 +11,7 @@ import router from "next/router";
 export default function Home() {
   const [game, setGame] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([])
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), []);
   const [user, setUser] = useState<any>() 
   const initialLoadDone = useRef(false);
   const myPlayer = players.find(player => player.id === user.id)
@@ -52,6 +52,7 @@ export default function Home() {
     }
   }
   
+  // New street effect
   useEffect(() => {
     console.log("turn player changed:", game?.turn_player)
 
@@ -83,15 +84,16 @@ export default function Home() {
     // se puede optimizar para cada vez que me toque a mi
   }, [game?.turn_player])
   
+  // Insert user
   useEffect(() => {
     supabase.auth.getUser().then(({ data : {user} }) => {
       setUser(user)
-      initialLoadDone.current = false
+      initialLoadDone. current = false
       
-      insertUserIntoGame() 
+      insertUserIntoGame(user) 
     });
       
-    async function insertUserIntoGame() {
+    async function insertUserIntoGame(user : any) {
       const { data } = await supabase
         .from('players')
         .select('*')
@@ -108,112 +110,92 @@ export default function Home() {
         return
       }
     }
+  }, []);
 
-    async function fetchData() {
+  // Channels
+  useEffect(() => {
+    if (!params?.id) return; // Protección si no hay ID todavía
+
+    let gameChannel: any = null;
+    let playersChannel: any = null;
+
+    const setupSubscriptions = async () => {
+      // --- Cargar datos iniciales ---
       try {
-        const { data } = await supabase
+        const { data: gameData } = await supabase
           .from('games')
           .select('*')
           .eq('id', params.id)
+          .single();
+        
+        if (gameData) setGame(gameData);
 
-        if (data && data.length > 0) setGame(data[0]);
-
-      } catch (error) {
-        console.error("Error fetching game data:", error);
-      }
-
-      const channels = supabase.channel('custom-all-channel')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'games' },
-          (payload) => {
-            setGame(payload.new);
-          }
-      )
-      .subscribe()
-
-      try {
-        const { data } = await supabase
+        const { data: playersData } = await supabase
           .from('players')
           .select('*')
           .eq('game', params.id)
-          .order('created_at', { ascending: true })
+          .order('created_at', { ascending: true });
 
-          console.log(data)
-
-        if (data && data.length > 0) setPlayers(data);
-
-      } catch (error) {
-        console.error("Error fetching game data:", error);
+        if (playersData) setPlayers(playersData);
+      } catch (e) {
+        console.error("Error fetching initial data", e);
       }
-      
 
-      const channelsPlayers = supabase.channel('custom-all-channel2')
+      if(!params?.id && typeof params?.id !== "string") return
+
+      // --- Suscripción a GAMES ---
+      gameChannel = supabase.channel(`games-${params.id}`)
         .on(
           'postgres_changes',
-           { 
-            event: '*', 
-            schema: 'public', 
-            table: 'players',
-            filter: `game=eq.${params.id}`  // ← FILTRAR POR JUEGO
-          },
+          { event: '*', schema: 'public', table: 'games', filter: `id=eq.${params.id}` },
           (payload) => {
-            console.log('=== PLAYER CHANGE EVENT ===');
-            console.log('Event type:', payload.eventType);
-            console.log('Full payload:', JSON.stringify(payload, null, 2));
-            console.log('Old data (for DELETE):', payload.old);
-            console.log('New data (for INSERT/UPDATE):', payload.new);
-              
-            setPlayers(prevPlayers => {
-              if (payload.eventType === 'INSERT') {
-                if (!initialLoadDone) return 
-                const exists = prevPlayers.some(player => player.id === payload.new.id);
-                if (exists) return prevPlayers; // No agregar si ya existe
-                const newPlayers = [...prevPlayers, payload.new]
-                return newPlayers.sort()
-              }
-              if (payload.eventType === 'UPDATE'){
-                return prevPlayers.map(player=> 
-                  player.id === payload.new.id ? payload.new :  player
-                );
-              }
-              if (payload.eventType === 'DELETE'){
-                console.log('payload: ' + payload.old.id)
-                return prevPlayers.filter(player => player.id !== payload.old.id);
-              }
-            }); 
+            setGame(payload.new);
           }
-      )
-      .subscribe((status, error) => {
-        console.log('Players channel status:', status);
-        if(error) console.error('Players channel error:', error);
-        if (status === 'SUBSCRIBED') {
-          console.log('Canal de players suscrito exitosamente');
-          // Marcar que la carga inicial ya pasó
-          initialLoadDone.current = true;
-          console.log('initialLoadDone establecido a true');
-        }
-      })
+        )
+        .subscribe((status, error) => {
+          console.log("Subscribed to game channel", status, error);
+        });
 
-      return [channels, channelsPlayers]
-    }
+      // --- Suscripción a PLAYERS ---
+      playersChannel = supabase.channel(`players-${params.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'players', filter: `game=eq.${params.id}` },
+          (payload) => {
+            console.log("Player change detected:", payload);
+            // Tu lógica compleja de players aquí...
+            // NOTA: Usa 'setPlayers' con la función callback para tener el estado más reciente
+            setPlayers(prevPlayers => {
+               if (payload.eventType === 'INSERT') {
+                 if (prevPlayers.some(p => p.id === payload.new.id)) return prevPlayers;
+                 return [...prevPlayers, payload.new].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+               }
+               if (payload.eventType === 'UPDATE') {
+                 return prevPlayers.map(p => p.id === payload.new.id ? payload.new : p);
+               }
+               if (payload.eventType === 'DELETE') {
+                 return prevPlayers.filter(p => p.id !== payload.old.id);
+               }
+               return prevPlayers;
+            });
+          }
+        )
+        .subscribe(() => {
+          console.log("Subscribed to players channel");
+        });
+    };
 
-    let channelsPlayers: any
-    let channelGame: any
+    setupSubscriptions();
 
-    fetchData().then(([channelGameRespond, channelsPlayersRespond]) => { 
-      channelGame = channelGameRespond
-      channelsPlayers = channelsPlayersRespond
-    });
-
-    
+    // --- LIMPIEZA CORRECTA ---
     return () => {
-      if (channelGame) channelGame.unsubscribe()
-      if (channelsPlayers) channelsPlayers.unsubscribe()
-    }
-
-  }, []);
-
+      // Al desmontar, eliminamos explícitamente los canales creados en este efecto
+      if (gameChannel) supabase.removeChannel(gameChannel);
+      if (playersChannel) supabase.removeChannel(playersChannel);
+    };
+  }, [params.id, supabase]);
+  
+  // Delete player on unload or navigation
   useEffect( () => {
     const handleDeletePlayer = () => {
       console.log("borrando a: " + user.id)
