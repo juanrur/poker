@@ -54,6 +54,7 @@ export default function Home() {
   
   // New street effect
   useEffect(() => {
+    // recomendado borrarla para que no haya varios clientes intentando hacer lo mismo y es recomendable hacerlo cuando se calee el next turn solamente
     console.log("turn player changed:", game?.turn_player)
 
     console.log({
@@ -63,7 +64,7 @@ export default function Home() {
       turnIsUser: !game?.turn_player !== user?.id,
       // player === game o is_folded
       playersMatched: !players.every(player => player.bet === game?.actual_bet || player.is_folded),
-      hasIncrementedOrDealer: !game?.has_incremented || game?.turn_player !== game?.dealer,
+      hasIncrementedOrDealer: !(!game?.has_incremented && game?.turn_player === game?.dealer),
       overall: !!game && !!user && !!game?.deck && game?.turn_player === user?.id && players.every(player => player.bet === game?.bet || player.is_folded) && (game?.has_incremented || game?.turn_player === game?.dealer)
     })
 
@@ -74,7 +75,7 @@ export default function Home() {
     if(!game?.deck) return 
     if(!game?.turn_player !== user?.id) return
     if(!players.every(player => player.bet === game.actual_bet || player.is_folded )) return
-    if(!game.has_incremented && game.turn_player !== game.dealer) return
+    if(!(!game.has_incremented && game.turn_player === game.dealer)) return
     
     console.log("new street triggered")
    
@@ -327,19 +328,24 @@ export default function Home() {
   }
 
   async function nextTurn (updatedPlayers?: any[]) {
-    const playersToCheck = updatedPlayers || players;
-    console.log(playersToCheck, game?.actual_bet, game?.has_incremented)
-    console.log('next turn', playersToCheck.every(player => player.bet === game?.actual_bet || player.is_folded && game.has_incremented ))
-    if(playersToCheck.every(player => (player.bet === game?.actual_bet || player.is_folded) && game.has_incremented)) {
-      console.log("all players have matched the bet, new street")
-      newStreet()
-      return
-    }
-      
     console.log("next turn called")
+    
+    const playersToCheck = updatedPlayers || players;    
     const currentMyPlayer = playersToCheck.find(player => player.id === user?.id)
     const myPlayerIndex = playersToCheck.findIndex(player => player.id === currentMyPlayer?.id)
     const nextPlayer = playersToCheck[myPlayerIndex + 1] ? playersToCheck[myPlayerIndex + 1] : playersToCheck[0] 
+
+    if(
+        (playersToCheck.every(player => (player.bet === game?.actual_bet || player.is_folded) && game.has_incremented) 
+      ||
+        (!game.has_incremented && nextPlayer.id === game.dealer)
+    )) 
+    {
+      console.log("new street called from next turn")
+      newStreet()
+      return
+    }
+          
     await supabase.from('games').update({turn_player: nextPlayer.id}).eq('id', params.id).select()
   }
 
