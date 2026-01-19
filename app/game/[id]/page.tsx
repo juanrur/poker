@@ -60,7 +60,7 @@ export default function Home() {
       gameExists: !game,
       userExists: !user,
       deckExists: !game?.deck,
-      turnIsUser: game?.turn_player !== user?.id,
+      turnIsUser: !game?.turn_player !== user?.id,
       // player === game o is_folded
       playersMatched: !players.every(player => player.bet === game?.actual_bet || player.is_folded),
       hasIncrementedOrDealer: !game?.has_incremented || game?.turn_player !== game?.dealer,
@@ -72,7 +72,7 @@ export default function Home() {
     if (!game) return
     if(!user) return
     if(!game?.deck) return 
-    if(game?.turn_player !== user?.id) return
+    if(!game?.turn_player !== user?.id) return
     if(!players.every(player => player.bet === game.actual_bet || player.is_folded )) return
     if(!game.has_incremented && game.turn_player !== game.dealer) return
     
