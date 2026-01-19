@@ -27,11 +27,26 @@ export default function Home() {
   
   const params = useParams();
 
+  async function roundOver () {
+    const bote = players.forEach(player => player.bet)
+    await supabase.from('games').update({turn_player: null}).eq('id', params.id).select()
+    const updatedPlayers = players.map(player => ({...player, bet: 0, is_folded: false}))
+    for (const player of updatedPlayers) {
+      await supabase.from('players').update({bet: 0, is_folded: false, cards: []}).eq('id', player.id).select()
+    }
+    setPlayers(updatedPlayers)
+    await supabase.from('games').update({actual_bet: 0, street: 0, cards: [], has_incremented: false, deck: [], dealer: null}).eq('id', params.id).select()
+
+  }
+
   async function newStreet () {
     const newDeck = game.deck
     const shuffledNewDeck = [...newDeck].sort(() => Math.random() - 0.5)
     let newCards : any = []
-    if (game.street === 0) newCards = [shuffledNewDeck.pop(), shuffledNewDeck.pop(), shuffledNewDeck.pop()]
+    if (game.street === 3) {
+      roundOver()
+    } 
+    else if (game.street === 0) newCards = [shuffledNewDeck.pop(), shuffledNewDeck.pop(), shuffledNewDeck.pop()]
     else newCards = [shuffledNewDeck.pop()]
 
     if(newCards.length === 0) return
