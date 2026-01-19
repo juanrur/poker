@@ -229,7 +229,6 @@ export default function Home() {
       router.push = originalPush;
     };
   }, [user])
-  
 
 
   function getRandomCard() {
@@ -306,31 +305,41 @@ export default function Home() {
   }
 
   async function setYourBet (bet: number) {
+    const updatedPlayers = players.map(player => {
+      if (player.id === myPlayer.id) {
+        return { ...player, bet: bet };
+      }
+      return player;
+    });
+    setPlayers(updatedPlayers);
     const {data} = await supabase.from('players').update({ bet: bet }).eq('id', myPlayer.id).select() 
-    return data
+    return updatedPlayers;
   }
 
   async function setActualBet (bet: number) {
     await supabase.from('games').update({actual_bet: bet }).eq('id', params.id).select()
   }
 
-  async function setIsFolded () {
+  async function setIsFolded (updatedPlayers?: any[]) {
     await supabase.from('players').update({is_folded: true}).eq('id', myPlayer.id).select()
-    nextTurn()
+    const playersToPass = updatedPlayers || players;
+    nextTurn(playersToPass)
   }
 
-  async function nextTurn () {
-    console.log({game}, {players})
-    console.log(players.every(player => player.bet === game?.actual_bet || player.is_folded && game.has_incremented ))
-    if(players.every(player => player.bet === game?.actual_bet || player.is_folded && game.has_incremented )) {
+  async function nextTurn (updatedPlayers?: any[]) {
+    const playersToCheck = updatedPlayers || players;
+    console.log(playersToCheck, game?.actual_bet, game?.has_incremented)
+    console.log('next turn', playersToCheck.every(player => player.bet === game?.actual_bet || player.is_folded && game.has_incremented ))
+    if(playersToCheck.every(player => (player.bet === game?.actual_bet || player.is_folded) && game.has_incremented)) {
       console.log("all players have matched the bet, new street")
       newStreet()
       return
     }
       
     console.log("next turn called")
-    const myPlayerIndex = players.findIndex(player => player.id === myPlayer.id)
-    const nextPlayer = players[myPlayerIndex + 1] ? players[myPlayerIndex + 1] : players[0] 
+    const currentMyPlayer = playersToCheck.find(player => player.id === user?.id)
+    const myPlayerIndex = playersToCheck.findIndex(player => player.id === currentMyPlayer?.id)
+    const nextPlayer = playersToCheck[myPlayerIndex + 1] ? playersToCheck[myPlayerIndex + 1] : playersToCheck[0] 
     await supabase.from('games').update({turn_player: nextPlayer.id}).eq('id', params.id).select()
   }
 

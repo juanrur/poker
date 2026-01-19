@@ -19,8 +19,8 @@ export default function Actions({
   money: number;
   setActualBet: (bet: number) => void;
   setYourBet: (bet: number) => Promise<any>;
-  setIsFolded : (isFolded: boolean) => void;
-  nextTurn: () => void
+  setIsFolded : (isFolded: boolean, updatedPlayers?: any) => void;
+  nextTurn: (updatedPlayers?: any) => void
 }) {
 
   const [increment, setIncrement] = useState(actualBet ? actualBet*2: 20)
@@ -30,13 +30,13 @@ export default function Actions({
     setIncrement(actualBet*2)
   }, [actualBet])
 
-  const handleIncrementBet = () => {
+  const handleIncrementBet = async () => {
     if (increment > money) return;
-    setYourBet(increment);
+    const updatedPlayers = await setYourBet(increment);
     setActualBet(increment)
     hasIncremented()
     
-    nextTurn()
+    nextTurn(updatedPlayers)
   }
 
   const handlePass = () => {
@@ -44,8 +44,8 @@ export default function Actions({
   }
   
   const handleEqualize = async () => {
-    await setYourBet(actualBet)
-    nextTurn()
+    const updatedPlayers = await setYourBet(actualBet)
+    nextTurn(updatedPlayers)
   }
 
   return (
