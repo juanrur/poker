@@ -388,7 +388,8 @@ export default function Home() {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        userId: user?.id
+        userId: user?.id,
+        nextPlayerId: players[(players.findIndex(player => player.id === user?.id) + 1) % players.length]?.id
       }),
       keepalive: true
     })
@@ -506,8 +507,8 @@ export default function Home() {
                         {
                           player.cards && myPlayer?.id  === player.id &&
                           <div className="flex gap-2 ">
-                            <Card suit={player.cards[0]?.suit} number={player.cards[0].number} />
-                            <Card suit={player.cards[1]?.suit} number={player.cards[1].number} />
+                            <Card suit={player.cards[0]?.suit} number={player.cards[0]?.number} />
+                            <Card suit={player.cards[1]?.suit} number={player.cards[1]?.number} />
                           </div>
                         }
                         {

@@ -1,11 +1,13 @@
 import { createClient } from "@/app/db/create-server-client";
 
 export async function POST (request: Request) {
+  console.log('Delete player request received')
   try {
     const { userId } = await request.json()
     
     const supabase = await createClient()
     const { error } = await supabase.from('players').delete().eq('id',  userId)
+    console.log('Delete player result:', { error })
     if (error) return new Response('Error deleting user', {status: 500})
 
     return new Response('OK', {status: 200})
