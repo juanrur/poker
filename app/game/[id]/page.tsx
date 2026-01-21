@@ -389,7 +389,9 @@ export default function Home() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         userId: user?.id,
-        nextPlayerId: players[(players.findIndex(player => player.id === user?.id) + 1) % players.length]?.id
+        nextPlayerId: players[(players.findIndex(player => player.id === user?.id) + 1) % players.length]?.id,
+        gameId: params.id,
+        isDealer: myPlayer?.id === game?.dealer
       }),
       keepalive: true
     })
