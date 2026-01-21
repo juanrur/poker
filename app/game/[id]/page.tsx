@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Actions from "@/app/components/actions"
 import Table from "@/app/components/table";
-import { Card, cardNumber, suit } from "@/app/types";
+import { Card as CardType, cardNumber, suit } from "@/app/types";
 import MyCards from "@/app/components/my-cards";
 import { redirect, useParams } from "next/navigation";
 import { createClient } from "@/app/db/create-client-client";
 import router from "next/router";
+import Card from "@/app/components/card";
 
 export default function Home() {
   const [game, setGame] = useState<any>(null);
@@ -27,7 +28,7 @@ export default function Home() {
   
   const params = useParams();
 
-  function evaluateHand(playerCards: Card[], communityCards: Card[]): number {
+  function evaluateHand(playerCards: CardType[], communityCards: CardType[]): number {
     let value = 0
     const allCards = [...playerCards, ...communityCards]
     const cardValues = allCards.map(card => card.number).sort((a, b) => b - a)
@@ -487,7 +488,7 @@ export default function Home() {
             <p> {player.id === game?.turn_player && "(turn)" } {player.id === game?.dealer && "(dealer)" }</p>
             {
               player.cards &&
-              <p>Cards: {player?.cards[0]?.number} of {player?.cards[0]?.suit}, {player?.cards[1]?.number} of {player?.cards[1]?.suit}</p>
+              <Card suit={player.cards[0].suit} number={player.cards[0].number} />
             }
             <span>{JSON.stringify(player.bet)}</span>
             <p>{JSON.stringify(player.money)}</p>
