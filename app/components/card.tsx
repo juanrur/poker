@@ -25,9 +25,14 @@ export default function Card({ suit, number }: { suit: Suit; number: cardNumber;
 
   return <article
     style={suit === "heart" || suit === "diamond" ? { color: "red" } : { color: "black" }}
-    className="h-96 w-64 bg-white rounded-lg p-2 flex justify-between"
+    className="h-50 basis-34 flex-0 shrink-0 bg-white rounded-lg p-2 flex justify-between text-lg font-bold flex-col"
   >
-    <span>{symbols[suit]} {numbers[number]}</span>
+    <span>{symbols[suit]}{numbers[number]}</span>
+    <div className="flex flex-wrap items-center justify-center flex-1 content-center gap-y-1">
+      {Array.from({ length: number }, (_, i) => (
+        <div key={i} className="text-lg leading-none">{symbols[suit]}</div>
+      ))}
+    </div>
     <span className="self-end">{symbols[suit]} {numbers[number]}</span>
   </article>;
 }

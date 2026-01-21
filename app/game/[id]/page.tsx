@@ -8,6 +8,7 @@ import { redirect, useParams } from "next/navigation";
 import { createClient } from "@/app/db/create-client-client";
 import router from "next/router";
 import Card from "@/app/components/card";
+import CardReverse from "@/app/components/card-reverse";
 
 export default function Home() {
   const [game, setGame] = useState<any>(null);
@@ -382,17 +383,6 @@ export default function Home() {
  
   const isMyTurn = game?.turn_player === myPlayer?.id;
 
-  const sortedPlayers = useMemo(() => {
-    return [...players].sort((a, b) => {
-      // Si hay created_at, ordénalo por eso
-      if (a.created_at && b.created_at) {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-      // Si no, por id como fallback
-      return a.id.localeCompare(b.id);
-    });
-  }, [players]);
-
   function deletePlayer () {
     fetch('/api/delete-player/', {
       method: 'POST',
@@ -462,6 +452,21 @@ export default function Home() {
     return redirect('/')
   }
 
+  function moveToCenter (playerArray, player) {
+    const newPlayerArray = playerArray.filter(p => p.id !== player.id);
+    const leftPlayers = newPlayerArray.slice(0, Math.floor(newPlayerArray.length / 2));
+    const rightPlayers = newPlayerArray.slice(Math.floor(newPlayerArray.length / 2));
+    const newArray = [leftPlayers, [player], rightPlayers]
+    return newArray;
+  }
+
+  const sortedPlayers = useMemo(() =>{
+    if(!myPlayer) return players;
+    return moveToCenter(players, myPlayer);
+  }, [players, myPlayer]);
+
+  console.log({sortedPlayers})
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen py-2">
       <button className="border border-white p-3 absolute top-2 left-2 rounded" onClick={handleGoOut}>salir</button>
@@ -470,31 +475,59 @@ export default function Home() {
         <>
           <h1 className="my-4">ID: {game.id}</h1>
           <button onClick={copyID}>copy</button>
-          <h1>{JSON.stringify(game.cards)}</h1>
+          <div className="flex gap-2">
+            {game.cards?.map((card: CardType, idx: number) => (
+              <Card key={idx} suit={card.suit} number={card.number} />
+            ))}
+          </div>
           <span>
             {game.actual_bet}
           </span>
         </>
       }
-      
-      {sortedPlayers &&
-        sortedPlayers.map((player, idx) => (
-          <div 
-            key={player?.id || `player-${idx}-${Date.now()}`} 
-            className="p-4 m-2 text-sm"
-          > 
-            <h2 className="border size-fit p-2 rounded-full text-[1rem]">Player {idx + 1} </h2>
-            <span>{player?.id}</span>
-            <p> {player.id === game?.turn_player && "(turn)" } {player.id === game?.dealer && "(dealer)" }</p>
-            {
-              player.cards &&
-              <Card suit={player.cards[0].suit} number={player.cards[0].number} />
-            }
-            <span>{JSON.stringify(player.bet)}</span>
-            <p>{JSON.stringify(player.money)}</p>
-          </div>
-        ))
-      }
+      <div className="w-full overflow-x-auto">
+        <section className="inline-flex gap-4 my-4 min-w-full">
+          {sortedPlayers &&
+            sortedPlayers.map((players, idx) => {
+              if(players.length === 0) {
+                return <div key={`empty-${idx}`} className="p-4 m-2 text-sm flex-1"> </div>
+              } else {
+                return (
+                  players.map((player: any) => (
+                    <div 
+                      key={player?.id || `player-${idx}-${Date.now()}`} 
+                      style={idx !== 1 ? { flex: '1' } : {}}
+                      className="p-4 m-2 text-sm"
+                    > 
+                      <h2 className="border size-fit p-2 rounded-full text-[1rem]">Player</h2>
+                      <span>{player?.id}</span>
+                      <p> {player.id === game?.turn_player && "(turn)" } {player.id === game?.dealer && "(dealer)" }</p>
+                      <div className="">
+                        {
+                          player.cards && myPlayer?.id  === player.id &&
+                          <div className="flex gap-2 ">
+                            <Card suit={player.cards[0]?.suit} number={player.cards[0].number} />
+                            <Card suit={player.cards[1]?.suit} number={player.cards[1].number} />
+                          </div>
+                        }
+                        {
+                          player.cards && myPlayer?.id !== player.id &&
+                          <div className="flex gap-2">
+                            <CardReverse />
+                            <CardReverse />
+                          </div>
+                        }
+                      </div>
+                      <span>{JSON.stringify(player.bet)}</span>
+                      <p>{JSON.stringify(player.money)}</p>
+                    </div>
+                  ))
+                )
+              }
+            })
+          }
+        </section>
+      </div>
 
       {
         !game?.turn_player && 

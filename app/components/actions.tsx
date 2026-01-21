@@ -23,7 +23,7 @@ export default function Actions({
   nextTurn: (updatedPlayers?: any) => void
 }) {
 
-  const [increment, setIncrement] = useState(actualBet ? actualBet*2: 20)
+  const [increment, setIncrement] = useState(actualBet + 20)
   const [incrementVisibility, setIncrementVisibility] = useState(false)
 
   useEffect(() => {
