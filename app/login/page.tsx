@@ -1,7 +1,9 @@
+'use client'
 import { createClient } from '@/app/db/create-server-client'
 import { redirect } from 'next/navigation'
 
 export default function LoginPage() {
+  const url = window.location.origin || 'http://localhost:3000'
   async function handleGitHubSignIn(formData: FormData) {
     'use server'
     const supabase = await createClient()
@@ -10,7 +12,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin || 'http://localhost:3000'}/auth/callback`
+          redirectTo: `${url}/auth/callback`
         }
       })
       
