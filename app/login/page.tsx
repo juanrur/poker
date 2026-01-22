@@ -1,5 +1,5 @@
 'use client'
-import { createClient } from '@/app/db/create-server-client'
+import { createClient } from '@/app/db/create-client-client'
 import { redirect } from 'next/navigation'
 
 export default function LoginPage() {
