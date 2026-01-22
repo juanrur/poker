@@ -4,8 +4,7 @@ import { redirect } from 'next/navigation'
 
 export default function LoginPage() {
   const url = window.location.origin || 'http://localhost:3000'
-  async function handleGitHubSignIn(formData: FormData) {
-    'use server'
+  async function handleGitHubSignIn() {
     const supabase = await createClient()
     
     try {
@@ -41,7 +40,7 @@ export default function LoginPage() {
             Sign in to your account
           </h2>
         </div>
-        <form action={handleGitHubSignIn} className="mt-8 space-y-6">
+        <form onSubmit={handleGitHubSignIn} className="mt-8 space-y-6">
           <div>
             <button
               type="submit"
