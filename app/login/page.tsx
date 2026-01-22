@@ -1,17 +1,16 @@
 'use client'
 import { createClient } from '@/app/db/create-client-client'
-import { redirect } from 'next/navigation'
 
 export default function LoginPage() {
-  const url = window.location.origin || 'http://localhost:3000'
-  async function handleGitHubSignIn() {
-    const supabase = await createClient()
+  async function handleGitHubSignIn(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const supabase = createClient()
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${url}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       })
       
@@ -22,13 +21,11 @@ export default function LoginPage() {
       
       // Redirigir a la URL de GitHub
       if (data?.url) {
-        redirect(data.url)
+        window.location.href = data.url
       }
       
     } catch (error) {
       console.error('Error in GitHub sign in:', error)
-      // Puedes manejar el error aquí según tus necesidades 
-      throw error 
     }
   }
 
