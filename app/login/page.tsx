@@ -27,7 +27,7 @@ export default function LoginPage() {
     } catch (error) {
       console.error('Error in GitHub sign in:', error)
       // Puedes manejar el error aquí según tus necesidades 
-      throw error
+      throw error 
     }
   }
 
