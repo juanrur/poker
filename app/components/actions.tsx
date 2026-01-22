@@ -18,7 +18,7 @@ export default function Actions({
   money: number;
   setActualBet: (bet: number) => void;
   setYourBet: (bet: number) => Promise<any>;
-  setIsFolded : (updatedPlayers?: any) => void;
+  setIsFolded : (updatedPlayers?: any) => Promise<any>;
   nextTurn: (updatedPlayers?: any) => void
 }) {
 
@@ -47,6 +47,11 @@ export default function Actions({
     nextTurn(updatedPlayers)
   }
 
+  const handleFold = async () => {
+    const updatedPlayers = await setIsFolded()
+    nextTurn(updatedPlayers)
+  }
+
   return (
     <div className="flex gap-4">
       <button onClick={() => setIncrementVisibility(value => !value)}>Subir</button>
@@ -66,7 +71,7 @@ export default function Actions({
       { yourBet === actualBet && 
         <button onClick={handlePass}>Pasar</button>
       }
-      <button onClick={() => setIsFolded(true)}>Foldear</button>
+      <button onClick={handleFold}>Foldear</button>
     </div>
   );
 }

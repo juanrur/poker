@@ -116,7 +116,7 @@ export default function Home() {
     await supabase.from('games').update({turn_player: null}).eq('id', params.id).select()
     const updatedPlayers = players.map(player => ({...player, bet: 0, is_folded: false}))
     for (const player of updatedPlayers) {
-      await supabase.from('players').update({bet: 0, is_folded: false, cards: []}).eq('id', player.id).select()
+      await supabase.from('players').update({bet: 0, is_folded: false, cards: null}).eq('id', player.id).select()
     }
     setPlayers(updatedPlayers)
     await supabase.from('games').update({actual_bet: 0, street: 0, cards: [], has_incremented: false, deck: [], dealer: null}).eq('id', params.id).select()
@@ -413,16 +413,30 @@ export default function Home() {
     await supabase.from('games').update({actual_bet: bet }).eq('id', params.id).select()
   }
 
-  async function setIsFolded (updatedPlayers?: any[]) {
-    await supabase.from('players').update({is_folded: true}).eq('id', myPlayer.id).select()
-    const playersToPass = updatedPlayers || players;
-    nextTurn(playersToPass)
+  async function setIsFolded () {
+    const {data} = await supabase.from('players').update({is_folded: true}).eq('id', myPlayer.id).select()
+  
+    const updatedPlayers = players.map(player => {
+      if (player.id === myPlayer.id) {
+        return { ...player, is_folded: true };
+      }
+      return player;
+    });
+    setPlayers(updatedPlayers);
+    return updatedPlayers;
   }
 
   async function nextTurn (updatedPlayers?: any[]) {
     console.log("next turn called")
-    
-    const playersToCheck = updatedPlayers || players;    
+    const playersToCheck = updatedPlayers || players;
+    const playersNotFolded = (playersToCheck || players).filter(player => !player.is_folded)
+    if(playersNotFolded.length <= 1) {
+      console.log("round over called from next turn")
+      roundOver()
+      return
+    }
+
+    console.log({updatedPlayers, playersToCheck, players})    
     const currentMyPlayer = playersToCheck.find(player => player.id === user?.id)
     const myPlayerIndex = playersToCheck.findIndex(player => player.id === currentMyPlayer?.id)
     const nextPlayer = playersToCheck[myPlayerIndex + 1] ? playersToCheck[myPlayerIndex + 1] : playersToCheck[0] 
@@ -466,8 +480,6 @@ export default function Home() {
     if(!myPlayer) return players;
     return moveToCenter(players, myPlayer);
   }, [players, myPlayer]);
-
-  console.log({sortedPlayers})
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen py-2">
