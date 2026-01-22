@@ -1,14 +1,13 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from "react";
 import Actions from "@/app/components/actions"
-import Table from "@/app/components/table";
 import { Card as CardType, cardNumber, suit } from "@/app/types";
-import MyCards from "@/app/components/my-cards";
 import { redirect, useParams } from "next/navigation";
 import { createClient } from "@/app/db/create-client-client";
 import router from "next/router";
 import Card from "@/app/components/card";
 import CardReverse from "@/app/components/card-reverse";
+import PlayerTag from "@/app/components/player-tag";
 
 export default function Home() {
   const [game, setGame] = useState<any>(null);
@@ -475,7 +474,7 @@ export default function Home() {
       <button className="border border-white p-3 absolute top-2 left-2 rounded" onClick={handleGoOut}>salir</button>
       {
         game &&
-        <>
+        <header>
           <h1 className="my-4">ID: {game.id}</h1>
           <button onClick={copyID}>copy</button>
           <div className="flex gap-2">
@@ -486,7 +485,7 @@ export default function Home() {
           <span>
             {game.actual_bet}
           </span>
-        </>
+        </header>
       }
       <div className="w-full overflow-x-auto">
         <section className="inline-flex gap-4 my-4 min-w-full">
@@ -500,11 +499,14 @@ export default function Home() {
                     <div 
                       key={player?.id || `player-${idx}-${Date.now()}`} 
                       style={idx !== 1 ? { flex: '1' } : {}}
-                      className="p-4 m-2 text-sm"
+                      className="p-4 m-2 text-sm flex flex-col gap-4"
                     > 
-                      <h2 className="border size-fit p-2 rounded-full text-[1rem]">Player</h2>
-                      <span>{player?.id}</span>
-                      <p> {player.id === game?.turn_player && "(turn)" } {player.id === game?.dealer && "(dealer)" }</p>
+                      <header className="flex gap-2 items-center">
+                        <h2 className="border size-fit p-2 rounded-full text-[1rem]">Player</h2>
+                        {/* <span>{player?.id}</span> */}
+                        {player?.id === game?.dealer && <PlayerTag>Dealer</PlayerTag>}
+                        {player?.id === game?.turn_player && <PlayerTag>Turn</PlayerTag>}
+                      </header>
                       <div className="">
                         {
                           player.cards && myPlayer?.id  === player.id &&
@@ -536,11 +538,6 @@ export default function Home() {
         !game?.turn_player && 
         <button onClick={startGame}>Iniciar juego</button>
       }
-      
-      {/* <Table /> */}
-
-      {/* <MyCards cards={myCards}/> */}
-
 
       { !myPlayer?.is_folded && isMyTurn &&
         <Actions 
