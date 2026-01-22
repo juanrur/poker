@@ -20,7 +20,7 @@ export default function Home() {
   
   const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
   const suits: suit[] = ["heart", "spade", "club", "diamond"];
-  const deck = [];
+  const deck : any[] = [];
 
   for(let i=0; i<52; i++) {
     const card = { number: cardNumbers[i % 13], suit: suits[Math.floor(i / 13)] };
@@ -455,8 +455,8 @@ export default function Home() {
     return redirect('/')
   }
 
-  function moveToCenter (playerArray, player) {
-    const newPlayerArray = playerArray.filter(p => p.id !== player.id);
+  function moveToCenter (playerArray: any, player: any) {
+    const newPlayerArray = playerArray.filter((p: any) => p.id !== player.id);
     const leftPlayers = newPlayerArray.slice(0, Math.floor(newPlayerArray.length / 2));
     const rightPlayers = newPlayerArray.slice(Math.floor(newPlayerArray.length / 2));
     const newArray = [leftPlayers, [player], rightPlayers]
@@ -543,8 +543,15 @@ export default function Home() {
 
 
       { !myPlayer?.is_folded && isMyTurn &&
-        <Actions actualBet={game?.actual_bet}  yourBet={myPlayer?.bet}  money={myPlayer?.money} 
-        setYourBet={setYourBet} setActualBet={setActualBet} setIsFolded={setIsFolded} hasIncremented={hasIncremented}  nextTurn={nextTurn}
+        <Actions 
+          actualBet={game?.actual_bet}  
+          yourBet={myPlayer?.bet}  
+          money={myPlayer?.money} 
+          hasIncremented={hasIncremented}  
+          setActualBet={setActualBet} 
+          setYourBet={setYourBet} 
+          setIsFolded={setIsFolded} 
+          nextTurn={nextTurn}
         />
       } 
       

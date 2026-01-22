@@ -12,14 +12,13 @@ export default function Actions({
   setIsFolded,
   nextTurn
 }: {
-  user: any;
   hasIncremented: () => void;
   actualBet: number;
   yourBet: number;
   money: number;
   setActualBet: (bet: number) => void;
   setYourBet: (bet: number) => Promise<any>;
-  setIsFolded : (isFolded: boolean, updatedPlayers?: any) => void;
+  setIsFolded : (updatedPlayers?: any) => void;
   nextTurn: (updatedPlayers?: any) => void
 }) {
 

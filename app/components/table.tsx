@@ -24,7 +24,7 @@ export default function Table() {
     },
     {
       cards: [getRandomCard(), getRandomCard(), getRandomCard()],
-      isFoldeder: false
+      isFoldered: false
     },
     {
       cards: [getRandomCard(), getRandomCard(), getRandomCard()],
