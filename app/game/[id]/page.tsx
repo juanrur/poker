@@ -6,8 +6,7 @@ import { redirect, useParams } from "next/navigation";
 import { createClient } from "@/app/db/create-client-client";
 import router from "next/router";
 import Card from "@/app/components/card";
-import CardReverse from "@/app/components/card-reverse";
-import PlayerTag from "@/app/components/player-tag";
+import Players from "@/app/components/players";
 
 export default function Home() {
   const [game, setGame] = useState<any>(null);
@@ -153,37 +152,37 @@ export default function Home() {
   }
   
   // New street effect
-  useEffect(() => {
-    // recomendado borrarla para que no haya varios clientes intentando hacer lo mismo y es recomendable hacerlo cuando se calee el next turn solamente
-    console.log("turn player changed:", game?.turn_player)
+  // useEffect(() => {
+  //   // recomendado borrarla para que no haya varios clientes intentando hacer lo mismo y es recomendable hacerlo cuando se calee el next turn solamente
+  //   console.log("turn player changed:", game?.turn_player)
 
-    console.log({
-      gameExists: !game,
-      userExists: !user,
-      deckExists: !game?.deck,
-      turnIsUser: !game?.turn_player !== user?.id,
-      // player === game o is_folded
-      playersMatched: !players.every(player => player.bet === game?.actual_bet || player.is_folded),
-      hasIncrementedOrDealer: !(!game?.has_incremented && game?.turn_player === game?.dealer),
-      overall: !!game && !!user && !!game?.deck && game?.turn_player === user?.id && players.every(player => player.bet === game?.bet || player.is_folded) && (game?.has_incremented || game?.turn_player === game?.dealer)
-    })
+  //   console.log({
+  //     gameExists: !game,
+  //     userExists: !user,
+  //     deckExists: !game?.deck,
+  //     turnIsUser: !game?.turn_player !== user?.id,
+  //     // player === game o is_folded
+  //     playersMatched: !players.every(player => player.bet === game?.actual_bet || player.is_folded),
+  //     hasIncrementedOrDealer: !(!game?.has_incremented && game?.turn_player === game?.dealer),
+  //     overall: !!game && !!user && !!game?.deck && game?.turn_player === user?.id && players.every(player => player.bet === game?.bet || player.is_folded) && (game?.has_incremented || game?.turn_player === game?.dealer)
+  //   })
 
-    console.log({ players })
+  //   console.log({ players })
     
-    if (!game) return
-    if(!user) return
-    if(!game?.deck) return 
-    if(!game?.turn_player !== user?.id) return
-    if(!players.every(player => player.bet === game.actual_bet || player.is_folded )) return
-    if(!(!game.has_incremented && game.turn_player === game.dealer)) return
+  //   if (!game) return
+  //   if(!user) return
+  //   if(!game?.deck) return 
+  //   if(!game?.turn_player !== user?.id) return
+  //   if(!players.every(player => player.bet === game.actual_bet || player.is_folded )) return
+  //   if(!(!game.has_incremented && game.turn_player === game.dealer)) return
     
-    console.log("new street triggered")
+  //   console.log("new street triggered")
    
 
-    newStreet()
+  //   newStreet()
 
-    // se puede optimizar para cada vez que me toque a mi
-  }, [game?.turn_player])
+  //   // se puede optimizar para cada vez que me toque a mi
+  // }, [game?.turn_player])
   
   // Insert user
   useEffect(() => {
@@ -499,52 +498,8 @@ export default function Home() {
           </span>
         </header>
       }
-      <div className="w-full overflow-x-auto">
-        <section className="inline-flex gap-4 my-4 min-w-full">
-          {sortedPlayers &&
-            sortedPlayers.map((players, idx) => {
-              if(players.length === 0) {
-                return <div key={`empty-${idx}`} className="p-4 m-2 text-sm flex-1"> </div>
-              } else {
-                return (
-                  players.map((player: any) => (
-                    <div 
-                      key={player?.id || `player-${idx}-${Date.now()}`} 
-                      style={idx !== 1 ? { flex: '1' } : {}}
-                      className="p-4 m-2 text-sm flex flex-col gap-4"
-                    > 
-                      <header className="flex gap-2 items-center">
-                        <h2 className="border size-fit p-2 rounded-full text-[1rem]">Player</h2>
-                        {/* <span>{player?.id}</span> */}
-                        {player?.id === game?.dealer && <PlayerTag>Dealer</PlayerTag>}
-                        {player?.id === game?.turn_player && <PlayerTag>Turn</PlayerTag>}
-                      </header>
-                      <div className="">
-                        {
-                          player.cards && myPlayer?.id  === player.id &&
-                          <div className="flex gap-2 ">
-                            <Card suit={player.cards[0]?.suit} number={player.cards[0]?.number} />
-                            <Card suit={player.cards[1]?.suit} number={player.cards[1]?.number} />
-                          </div>
-                        }
-                        {
-                          player.cards && myPlayer?.id !== player.id &&
-                          <div className="flex gap-2">
-                            <CardReverse />
-                            <CardReverse />
-                          </div>
-                        }
-                      </div>
-                      <span>{JSON.stringify(player.bet)}</span>
-                      <p>{JSON.stringify(player.money)}</p>
-                    </div>
-                  ))
-                )
-              }
-            })
-          }
-        </section>
-      </div>
+
+      <Players players={sortedPlayers} game={game} myPlayer={myPlayer} />
 
       {
         !game?.turn_player && 

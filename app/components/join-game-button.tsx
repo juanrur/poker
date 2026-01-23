@@ -1,16 +1,13 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "../db/create-client-client"
 import { redirect } from "next/navigation";
 
 export default function JoinGameButton() {
   const supabase = createClient()
   const [userID, setUserID] = useState<string | null>(null);
-  const [gameID, setGameID] = useState<string>("");
+  const dialog = useRef<HTMLDialogElement>(null);
 
-  function handleChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    setGameID(event.target.value);
-  }
   
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -27,7 +24,10 @@ export default function JoinGameButton() {
     return <div>Please log in to join a game.</div>
   }
 
-  async function handleJoinGame(gameId: string) {
+  async function handleJoinGame(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const gameId = formData.get("gameId") as string;
     const { error: playerError } = await supabase.from('players').insert({ id: userID, game: gameId });
     if (playerError) {
       console.error("Error creando player:", playerError);
@@ -40,8 +40,18 @@ export default function JoinGameButton() {
 
   return (
     <>
-      <button onClick={() => handleJoinGame(gameID)}>Join a game</button>
-      <textarea name="gameId" id="gameId" onChange={handleChange}></textarea>
+      <button onClick={() => dialog.current?.showModal()}>Join a game</button>
+      <dialog 
+      ref={dialog} 
+      closedby="any" 
+      className="mx-auto top-32 w-[80%] max-w-[700px] p-6 rounded-lg shadow-lg">
+        <form 
+        className="flex flex-col"
+        onSubmit={handleJoinGame}>
+          <label htmlFor="gameId">Insert Game ID:</label>
+          <input type="text" name="gameId" id="gameId" className="border"></input>
+        </form>
+      </dialog>
     </>
   )
 }
