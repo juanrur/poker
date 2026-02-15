@@ -7,14 +7,16 @@ import { createClient } from "@/app/db/create-client-client";
 import router from "next/router";
 import Card from "@/app/components/card";
 import Players from "@/app/components/players";
+import { usePlayer } from "@/app/components/player-context";
 
 export default function Home() {
   const [game, setGame] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([])
   const supabase = useMemo(() => createClient(), []);
-  const [user, setUser] = useState<any>() 
   const initialLoadDone = useRef(false);
-  const myPlayer = players.find(player => player.id === user.id)
+  const playerID = usePlayer().player?.id
+
+  const myPlayer = players.find(player => player.id === playerID)
   
   const cardNumbers: cardNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
   const suits: suit[] = ["heart", "spade", "club", "diamond"];
@@ -186,30 +188,23 @@ export default function Home() {
   
   // Insert user
   useEffect(() => {
-    supabase.auth.getUser().then(({ data : {user} }) => {
-      setUser(user)
-      initialLoadDone. current = false
-      
-      insertUserIntoGame(user) 
-    });
-      
-    async function insertUserIntoGame(user : any) {
-      const { data } = await supabase
-        .from('players')
-        .select('*')
-        .eq('id', user?.id)
-        .eq('game', params.id)
+    async function insertUserIntoGame() {
+      if (!playerID) redirect("/")
+        
+      const { data } = await supabase.from('players').select('*').eq('id', playerID).single()
+        
+      if (data?.game === params.id) return
 
-      if (data !== null && data?.length > 0) return; // Ya está en la tabla players
-      if (!user) return
-
-      const { error: playerError } = await supabase.from('players').insert({ id: user.id, game: params.id })
-      if (playerError) {
-        console.error("Error creando player:", playerError)
-        alert(playerError.message); // Esto te mostrará el mensaje exacto
-        return
-      }
+      await supabase.from('players').update({ game: params.id }).eq('id', playerID).then(({ error }) => {
+        if (error) {
+          console.error("Error inserting player into game:", error);
+          alert(error.message);
+          return;
+        }
+      });
     }
+
+    insertUserIntoGame()
   }, []);
 
   // Initial Load Effect
@@ -273,14 +268,15 @@ export default function Home() {
         { event: '*', schema: 'public', table: 'players', filter: `game=eq.${params.id}` },
         (payload) => {
           console.log("Player change detected:", payload);
-          // Tu lógica compleja de players aquí...
-          // NOTA: Usa 'setPlayers' con la función callback para tener el estado más reciente
           setPlayers(prevPlayers => {
               if (payload.eventType === 'INSERT') {
                 if (prevPlayers.some(p => p.id === payload.new.id)) return prevPlayers;
                 return [...prevPlayers, payload.new].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
               }
               if (payload.eventType === 'UPDATE') {
+
+                // TODO: tengo que tener en cuenta que aquí se puede actualizar un jugador para añadirlo a la partida y no solo para actualizar
+                // sus características
                 return prevPlayers.map(p => p.id === payload.new.id ? payload.new : p);
               }
               if (payload.eventType === 'DELETE') {
@@ -307,7 +303,7 @@ export default function Home() {
   // Delete player on unload or navigation
   useEffect( () => {
     const handleDeletePlayer = () => {
-      console.log("borrando a: " + user.id)
+      console.log("borrando a: " + playerID)
       deletePlayer()
     }
 
@@ -328,7 +324,7 @@ export default function Home() {
       window.removeEventListener('pagehide', handleDeletePlayer)
       router.push = originalPush;
     };
-  }, [user])
+  }, [playerID])
 
 
   function getRandomCard() {
@@ -386,8 +382,8 @@ export default function Home() {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        userId: user?.id,
-        nextPlayerId: players[(players.findIndex(player => player.id === user?.id) + 1) % players.length]?.id,
+        userId: playerID,
+        nextPlayerId: players[(players.findIndex(player => player.id === playerID) + 1) % players.length]?.id,
         gameId: params.id,
         isDealer: myPlayer?.id === game?.dealer
       }),
@@ -436,7 +432,7 @@ export default function Home() {
     }
 
     console.log({updatedPlayers, playersToCheck, players})    
-    const currentMyPlayer = playersToCheck.find(player => player.id === user?.id)
+    const currentMyPlayer = playersToCheck.find(player => player.id === playerID)
     const myPlayerIndex = playersToCheck.findIndex(player => player.id === currentMyPlayer?.id)
     const nextPlayer = playersToCheck[myPlayerIndex + 1] ? playersToCheck[myPlayerIndex + 1] : playersToCheck[0] 
 

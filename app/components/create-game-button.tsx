@@ -1,38 +1,21 @@
 'use client'
-import { useEffect, useState } from "react";
 import { createClient } from "../db/create-client-client"
 import { v4 as uuid } from 'uuid';
 import { redirect } from "next/navigation";
+import { usePlayer } from "./player-context";
 
 export default function CreateGameButton() {
   const supabase = createClient()
-  const [userID, setUserID] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUserID(session.user.id)
-      } else {
-        setUserID(null)
-      }
-    })
-    return () => listener.subscription.unsubscribe()
-  }, [supabase])
 
-  if (!userID) {
-    return <div>Please log in to create a game.</div>
-  }
+  const playerId = usePlayer().player?.id
 
   async function handleCreateGame() {
     console.log("Creating a new game...")
     const newGameID = uuid()
     await supabase.from('games').insert({id: newGameID})
-    const { error: playerError } = await supabase.from('players').insert({ id: userID, game: newGameID });
-    if (playerError) {
-      console.error("Error creando player:", playerError);
-      alert(playerError.message); // Esto te mostrará el mensaje exacto
-      return;
-    }
+
+    await supabase.from('players').update({ game: newGameID }).eq('id', playerId)
+
     redirect(`/game/${newGameID}`)
   }
 
