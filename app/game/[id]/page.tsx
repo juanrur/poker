@@ -274,9 +274,10 @@ export default function Home() {
                 return [...prevPlayers, payload.new].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
               }
               if (payload.eventType === 'UPDATE') {
+                if (!prevPlayers.some(p => p.id === payload.new.id)) {
+                  return [...prevPlayers, payload.new].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                }
 
-                // TODO: tengo que tener en cuenta que aquí se puede actualizar un jugador para añadirlo a la partida y no solo para actualizar
-                // sus características
                 return prevPlayers.map(p => p.id === payload.new.id ? payload.new : p);
               }
               if (payload.eventType === 'DELETE') {
