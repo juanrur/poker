@@ -18,7 +18,7 @@ export default function Players({players, game, myPlayer} : {players: any[][], g
                         className="p-4 m-2 text-sm flex flex-col gap-4"
                       > 
                         <header className="flex gap-2 items-center">
-                          <h2 className="border size-fit p-2 rounded-full text-[1rem]">Player</h2>
+                          <h2 className="border size-fit p-2 rounded-full text-[1rem]">{player?.name}</h2>
                           {player?.id === game?.dealer && <PlayerTag>Dealer</PlayerTag>}
                           {player?.id === game?.turn_player && <PlayerTag>Turn</PlayerTag>}
                         </header>
