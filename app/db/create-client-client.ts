@@ -2,7 +2,7 @@ import { createBrowserClient as createSupabaseClient } from '@supabase/ssr';
 
 export function createClient() {
   return createSupabaseClient(
-    "https://jqadyqbncdmehtgpyqbj.supabase.co", "sb_publishable_fwmwILtbQ36bm1ZF7zfCaw_GaW_XDBJ",
+    process.env.NEXT_PUBLIC_DB_URL!, process.env.NEXT_PUBLIC_DB_PUBLISHABLE_KEY!,
     {
       auth: {
         persistSession: true,
