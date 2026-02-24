@@ -500,7 +500,7 @@ export default function Home() {
 
       {
         !game?.turn_player && 
-        <button onClick={startGame}>Iniciar juego</button>
+        <button onClick={startGame}>Start Game</button>
       }
 
       { !myPlayer?.is_folded && isMyTurn &&
