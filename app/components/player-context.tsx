@@ -3,17 +3,6 @@
 import { ReactNode, useContext, useEffect, useState } from "react";
 import { createContext } from "react";
 
-export type Player = {
-  id: string; // uuid, PK
-  // created_at: string; // timeStamp tz (ISO string)
-  // game?: string | null; // uuid, nullable, FK -> games.id
-  // bet?: number | null; // integer, nullable
-  // money: number; // bigint mapped to string to preserve precision
-  // is_folded: boolean; // boolean
-  // cards?: object | null; // jsonb, nullable — usa un tipo más específico si tienes la forma del JSON
-  // name: string; // text
-};
-
 interface PlayerContextValue {
   player: Player | null;
   setPlayer: (player: Player | null) => void;
