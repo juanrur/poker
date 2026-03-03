@@ -10,6 +10,8 @@ export class Call {
     game.callCurrentPlayer()
     
     game.advanceTurn()
+
+    if(game.shouldFinishGame()) game.finishGame()
     
     if (game.shouldAdvanceStreet()) game.advanceStreet()
     

@@ -10,6 +10,8 @@ export class Fold {
     game.foldCurrentPlayer()
     game.advanceTurn()
 
+    if(game.shouldFinishGame()) game.finishGame()
+
     if (game.shouldAdvanceStreet()) game.advanceStreet()
       
     await this.gameRepo.save(game)

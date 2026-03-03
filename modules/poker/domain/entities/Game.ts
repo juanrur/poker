@@ -120,21 +120,15 @@ export class Game {
       count++
     } while (this.players[nextPlayerIndex].isFolded === true)
 
-
-    // console.log(this.players[nextPlayerIndex].id  === this.dealer?.id && this.roundState === RoundStates.ACTIVE)
     if(this.players[nextPlayerIndex].id  === this.dealer?.id && this.roundState === RoundStates.ACTIVE) {
       this.roundState = transition(this.roundState, RoundEvents.ALL_PASSED)
     }
-
-    // console.log(this.roundState === RoundStates.INCREASED && this.players.every(player => (player.bet === this.actualBet || player.isFolded)))
-
+    
+    // Check is round is over
     if(this.roundState === RoundStates.INCREASED && this.players.every(player => (player.bet === this.actualBet || player.isFolded))) {
       this.roundState = transition(this.roundState, RoundEvents.ALL_EQUAL)
     }
-      
-    this.currentTurnPlayer = this.players[nextPlayerIndex]
-
-    // Check is round is over
+    
     if(this.roundState === RoundStates.ACTIVE) {
       const dealerIndex = this.players.findIndex(({id}) => this.dealer?.id === id)
       const currentTurnPlayerIndex = this.players.findIndex(({id}) => this.currentTurnPlayer?.id === id)
@@ -144,6 +138,7 @@ export class Game {
       }
     }
     
+    this.currentTurnPlayer = this.players[nextPlayerIndex]
   }
 
   raiseCurrentPlayer(amount: number) {
@@ -164,6 +159,26 @@ export class Game {
 
   callCurrentPlayer() {
     this.currentTurnPlayer?.placeBet(this.actualBet)
+  }
+
+  shouldFinishGame() {
+    const allPlayerAreFolded = this.players
+    .filter(player => player.id !== this.dealer?.id)
+    .every(player => player.isFolded)
+    const gameIsOver = this.street === 3 && this.roundState === RoundStates.COMPLETE
+    return gameIsOver || allPlayerAreFolded
+  }
+
+  finishGame(){
+    this.roundState = RoundStates.ACTIVE
+    this.actualBet = 0
+    this.smallBlind = 20
+    this.currentTurnPlayer = null
+    this.dealer = null
+    this.street = 0
+    this.deck = [] 
+    this.cards = [] 
+    this.pot = 0
   }
 }
 
