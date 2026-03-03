@@ -88,28 +88,34 @@ describe('Poker application test', () => {
     const playerOne = await createPlayer.execute('juan')
     const game = await createGame.execute(playerOne.id)
     if(!game) return
-
+    
     const joinGame = new JoinGame(mockRepository)
     const playerTwo = await createPlayer.execute('clara')
     await joinGame.execute(game.id, playerTwo.id)
-
-    const startGame = new StartGame(mockRepository)
-    await startGame.execute(game.id)
     
+    const startGame = new StartGame(mockRepository)
     const call = new Call(mockRepository)
     const check = new Check(mockRepository)
-
-    await call.execute(game.id)
-    await check.execute(game.id)
+    
+    await startGame.execute(game.id)
+    
+    await call.execute(game.id)    
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(1)
     
     await check.execute(game.id)
     await check.execute(game.id)
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(2)
     
     await check.execute(game.id)
     await check.execute(game.id)
-
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(3)
+    
+    await check.execute(game.id)
+    await check.execute(game.id)
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(0)
+    
+    
     const updatedGame = await mockRepository.getGameById(game.id)
-
-    console.log({updatedGame: GameDTOMapper.toDTO(updatedGame!)})
+    expect(updatedGame?.currentTurnPlayer).toBeNull()
   })
 })

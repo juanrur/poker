@@ -1,5 +1,6 @@
 import { Game } from "../../domain/entities/Game";
 import { GameRepository } from "../../domain/repositories/GameRepository";
+import { PlayerDTOMapper } from "../mappers/PlayerDTOMapper";
 
 export class Check {
   constructor(private gameRepo: GameRepository) {}
@@ -9,6 +10,8 @@ export class Check {
     if(!game) return
     
     game.advanceTurn()
+    
+    if(game.shouldFinishGame()) game.finishGame()
 
     if (game.shouldAdvanceStreet()) game.advanceStreet()
       
