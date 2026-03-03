@@ -1,5 +1,6 @@
-import { suit as Suit, cardNumber } from "@/app/types";
-export default function Card({ suit, number }: { suit: Suit; number: cardNumber; }) {
+// TODO: personalizar los tipos
+
+export default function Card({ suit, number }: { suit: string; number: number; }) {
   const symbols = {
     heart: "❤️",
     diamond: "♦️",
@@ -7,7 +8,7 @@ export default function Card({ suit, number }: { suit: Suit; number: cardNumber;
     club: "♣️",
   };
 
-  const numbers: { [key in cardNumber]: string } = {
+  const numbers = {
     1: "A",
     2: "2",
     3: "3",

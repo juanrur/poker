@@ -3,75 +3,56 @@
 import { useEffect, useState } from "react";
 
 export default function Actions({
-  actualBet,
-  yourBet,
-  money,
-  hasIncremented,
-  setActualBet,
-  setYourBet,
-  setIsFolded,
-  nextTurn
+  raise,
+  check,
+  call, 
+  fold,
+  canCheck,
+  minRaise,
+  maxRaise
 }: {
-  hasIncremented: () => void;
-  actualBet: number;
-  yourBet: number;
-  money: number;
-  setActualBet: (bet: number) => void;
-  setYourBet: (bet: number) => Promise<any>;
-  setIsFolded : (updatedPlayers?: any) => Promise<any>;
-  nextTurn: (updatedPlayers?: any) => void
+  raise: (amount: number) => void,
+  check: () => void,
+  call: () => void, 
+  fold: () => void,
+  minRaise: number,
+  maxRaise: number,
+  canCheck: boolean
 }) {
 
-  const [increment, setIncrement] = useState(actualBet + 20)
+  const [increment, setIncrement] = useState(
+    minRaise * 2 < maxRaise 
+    ? minRaise * 2 
+    : minRaise + 20
+  )
   const [incrementVisibility, setIncrementVisibility] = useState(false)
-
-  useEffect(() => {
-    setIncrement(actualBet*2)
-  }, [actualBet])
-
-  const handleIncrementBet = async () => {
-    if (increment > money) return;
-    const updatedPlayers = await setYourBet(increment);
-    setActualBet(increment)
-    hasIncremented()
-    
-    nextTurn(updatedPlayers)
-  }
-
-  const handlePass = () => {
-    nextTurn()
-  }
-  
-  const handleEqualize = async () => {
-    const updatedPlayers = await setYourBet(actualBet)
-    nextTurn(updatedPlayers)
-  }
-
-  const handleFold = async () => {
-    const updatedPlayers = await setIsFolded()
-    nextTurn(updatedPlayers)
-  }
 
   return (
     <div className="flex gap-4">
       <button onClick={() => setIncrementVisibility(value => !value)}>Subir</button>
       {
-        actualBet && incrementVisibility &&
+       incrementVisibility &&
         <div className="grid grid-rows-2">
           <div>
-            <input type="range" name="increment" onChange={(event) => setIncrement(Number(event.target.value))} defaultValue={increment} max={money} min={actualBet+20}/>
+            <input
+              type="range"
+              name="increment"
+              onChange={(event) => setIncrement(Number(event.target.value))}
+              defaultValue={increment}
+              max={maxRaise}
+              min={minRaise}/>
             <span>{increment}</span>
           </div>
-          <button onClick={handleIncrementBet}>increment</button>
+          <button onClick={() => raise(increment)}>Raise</button>
         </div>
       }
-      {yourBet < actualBet &&
-        <button onClick={handleEqualize}>Igualar</button>
+      { !canCheck &&
+        <button onClick={call}>Call</button>
       }
-      { yourBet === actualBet && 
-        <button onClick={handlePass}>Pasar</button>
+      { canCheck && 
+        <button onClick={check}>Check</button>
       }
-      <button onClick={handleFold}>Foldear</button>
+      <button onClick={fold}>Fold</button>
     </div>
   );
 }

@@ -1,22 +1,26 @@
 'use client'
-import { createClient } from "../db/create-client-client"
-import { v4 as uuid } from 'uuid';
 import { redirect } from "next/navigation";
-import { usePlayer } from "./player-context";
+import { usePlayer } from "@/modules/poker/presentation/hooks/usePlayer";
 
 export default function CreateGameButton() {
-  const supabase = createClient()
-
-  const playerId = usePlayer().player?.id
+  const { player } = usePlayer()
 
   async function handleCreateGame() {
-    console.log("Creating a new game...")
-    const newGameID = uuid()
-    await supabase.from('games').insert({id: newGameID})
+    let newGameId
 
-    await supabase.from('players').update({ game: newGameID }).eq('id', playerId)
+    fetch(`/api/games/create`, {
+      method: 'POST',
+      body: JSON.stringify({
+        playerId: player?.id
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      newGameId = data.gameId
+      redirect(`/game/${newGameId}`)
+    })
 
-    redirect(`/game/${newGameID}`)
+
   }
 
   return (

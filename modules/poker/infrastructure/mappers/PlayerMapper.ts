@@ -42,7 +42,7 @@ export class PlayerMapper {
       is_folded: player.isFolded,
       game: player.gameID,
       // TODO: solucionar fecha inventada
-      created_at: new Date().toTimeString()
+      created_at: new Date().toISOString()
     })
   }
 }

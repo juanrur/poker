@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import PlayerContextProvider from "./components/player-context";
+import PlayerContextProvider from "@/modules/poker/presentation/contexts/player-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

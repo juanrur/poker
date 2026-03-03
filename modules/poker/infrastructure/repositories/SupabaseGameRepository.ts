@@ -5,10 +5,14 @@ import { GameMapper } from "../mappers/GameMapper";
 import { Player } from "../../domain/entities/Player";
 import { PlayerMapper } from "../mappers/PlayerMapper";
 
-const supabase = await createClient()
-
 export class SupabaseGameRepository implements GameRepository{
+
+  private async getClient() {
+    return await createClient()
+  }
+
   async getGameById(gameId: Game["id"]): Promise<Game | null> {
+    const supabase = await this.getClient()
     const { data: gameData } = await supabase
     .from('games')
     .select('*')
@@ -27,6 +31,7 @@ export class SupabaseGameRepository implements GameRepository{
   }
 
   async getPlayerById(playerId: Player["id"]): Promise<Player | null> {
+    const supabase = await this.getClient()
     const { data: playerData } = await supabase
     .from('players')
     .select('*')
@@ -39,11 +44,16 @@ export class SupabaseGameRepository implements GameRepository{
   }
   
   async save(game: Game):  Promise<Game | null>{
+    const supabase = await this.getClient()
     const { gameRow, playerRows } = GameMapper.toRow(game)
-    const { data: gameData, error: gameError } = await supabase.from('game').upsert(gameRow).select().single()
+   
+    const { data: gameData, error: gameError } = await supabase.from('games').upsert(gameRow).select().single()
+    
+    if(!gameData) throw new Error(`Error saving the game: ${gameError?.message}`)
+   
     const playersDataPromise = playerRows.map(async playerRow => {
       const { data: playerData, error: playerError } = await supabase.from('players').upsert(playerRow).select().single()
-      if (playerError) throw new Error(playerError.message);
+      if (!playerData) throw new Error(playerError?.message);
       return playerData
     })
     
@@ -56,6 +66,7 @@ export class SupabaseGameRepository implements GameRepository{
   }
 
   async savePlayer(player: Player): Promise<Player | null> {
+    const supabase = await this.getClient()
     const playerRow = PlayerMapper.toRow(player)
     const { data: playerData, error: playerError } = await supabase.from('players').upsert(playerRow).select().single()
     

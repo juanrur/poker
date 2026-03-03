@@ -1,21 +1,30 @@
 'use client'
-import { useEffect, useState, useRef } from "react";
-import { createClient } from "../db/create-client-client"
+import { useRef } from "react";
 import { redirect } from "next/navigation";
-import { usePlayer } from "./player-context";
+import { usePlayer } from "@/modules/poker/presentation/hooks/usePlayer";
+import { JoinDTO } from "../api/games/[game_id]/join/route";
 
 export default function JoinGameButton() {
-  const supabase = createClient()
   const dialog = useRef<HTMLDialogElement>(null);
 
-  const playerID = usePlayer().player?.id
+  const playerId = usePlayer().player?.id
+
+  if(!playerId) redirect('/')
 
   async function handleJoinGame(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const gameId = formData.get("gameId") as string;
 
-    await supabase.from('players').update({ game: gameId }).eq('id', playerID)
+    const dto: JoinDTO = {
+      playerId: playerId!
+    } 
+    fetch(`/api/games/${gameId}/join`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        playerId
+      })
+    })
     redirect(`/game/${gameId}`)
   }
 

@@ -3,8 +3,6 @@ import { Value, Suit } from "./Card";
 import { Card } from "./Card";
 import { Player } from "./Player";
 import { RoundEvents, RoundStates, transition } from "../machines/RoundMachine";
-import { PlayerMapper } from "../../infrastructure/mappers/PlayerMapper";
-import { PlayerDTOMapper } from "../../application/mappers/PlayerDTOMapper";
 
 export class Game {
   roundState: RoundStates = RoundStates.ACTIVE
@@ -23,11 +21,12 @@ export class Game {
 
   addPlayer(player: Player) {
     this.players.push(player);
-    player.setGameID(this.id)
+    player.joinGame(this.id)
   }
 
-  removePlayer(id: Player['id']) {
-    this.players = this.players.filter((player) => player.id !== id)
+  removePlayer(player: Player) {
+    this.players = this.players.filter(playerIn => playerIn !== player)
+    player.leaveGame()
   }
 
   addToPot(amount: number) {

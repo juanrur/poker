@@ -27,11 +27,11 @@ export class Player {
     this.isFolded = true
   }
 
-  setGameID(newGameID: string) {
+  joinGame(newGameID: string) {
     this.gameID = newGameID
   }
   
-  getGameID() {
-    return this.gameID
+  leaveGame() {
+    this.gameID = null
   }
 }

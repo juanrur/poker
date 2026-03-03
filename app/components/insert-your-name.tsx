@@ -1,31 +1,17 @@
 'use client'
-
 import { redirect } from "next/navigation";
-import { createClient } from "../db/create-client-client";
-import { usePlayer } from "./player-context";
-import { v4 as uuid} from "uuid";
+import { usePlayer } from "@/modules/poker/presentation/hooks/usePlayer";
 
 export default function InsertYourName() {
-  const { setPlayer } = usePlayer();
+  const { createPlayer } = usePlayer();
   
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const name = formData.get("name");
+    const name = formData.get("name") as string;
+        
+    createPlayer(name).then(() => redirect('/play'))
     
-    const supabase = createClient()
-
-    const id = uuid();
-    
-    supabase.from('players').insert({ name, id }).then(({ error }) => {
-      if (error) {
-        console.error("Error inserting player:", error);
-      }
-    })
-
-    setPlayer({ id });
-
-    redirect('/play')
   };
 
   return (

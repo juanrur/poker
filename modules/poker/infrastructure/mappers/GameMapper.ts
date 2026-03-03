@@ -92,7 +92,7 @@ export class GameMapper {
       is_folded: p.isFolded,
       game: p.gameID,
       // TODO: solucionar fecha inventada
-      created_at: new Date().toTimeString()
+      created_at: new Date().toISOString()
     }))
 
     return {gameRow, playerRows}
