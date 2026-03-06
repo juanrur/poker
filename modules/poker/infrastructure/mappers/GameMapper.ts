@@ -66,7 +66,8 @@ export class GameMapper {
     game.cards = gameRow.cards
     // has_incremented: boolean | null;
     game.roundState = gameRow.has_incremented === true ? RoundStates.INCREASED : RoundStates.ACTIVE
-    // TODO: game.pot
+    // game pot 
+    game.pot = game.players.reduce((acc, player) => acc + player.bet, 0)
     return game
   }
 

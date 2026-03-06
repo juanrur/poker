@@ -3,6 +3,7 @@ import { Value, Suit } from "./Card";
 import { Card } from "./Card";
 import { Player } from "./Player";
 import { RoundEvents, RoundStates, transition } from "../machines/RoundMachine";
+import { evaluateHand } from "../services/HandEvaluator";
 
 export class Game {
   roundState: RoundStates = RoundStates.ACTIVE
@@ -27,10 +28,6 @@ export class Game {
   removePlayer(player: Player) {
     this.players = this.players.filter(playerIn => playerIn !== player)
     player.leaveGame()
-  }
-
-  addToPot(amount: number) {
-    this.pot += amount;
   }
 
   initializeDeck(){
@@ -158,6 +155,7 @@ export class Game {
 
   callCurrentPlayer() {
     this.currentTurnPlayer?.placeBet(this.actualBet)
+    this.pot += this.currentTurnPlayer?.bet! - this.actualBet
   }
 
   shouldFinishGame() {
@@ -169,6 +167,29 @@ export class Game {
   }
 
   finishGame(){
+    let winner = this.players[0] 
+    this.players.reduce(
+      (preValue, player) => {
+        const handValue = evaluateHand(player.cards, this.cards) 
+        if(handValue > preValue) {
+          winner = player
+          return handValue
+        }
+        return preValue
+      }, 
+      0
+    )
+
+    winner.money += this.pot
+
+    console.log({winner: winner.name})
+
+    this.players.forEach(player => {
+      player.bet = 0
+      player.cards = []
+      player.isFolded = false
+    })
+
     this.roundState = RoundStates.ACTIVE
     this.actualBet = 0
     this.smallBlind = 20

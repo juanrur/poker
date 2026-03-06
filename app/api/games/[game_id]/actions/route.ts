@@ -17,6 +17,7 @@ export type ActionsDTO = {
 export async function PUT (request: Request, { params }: { params: Promise<{game_id: string}>}) {
   const { game_id: gameId } = await params 
   const { type, amount, playerToken } = await request.json() as ActionsDTO
+  console.log(type)
 
   const gameRepository = new SupabaseGameRepository()
 

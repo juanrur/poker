@@ -8,7 +8,7 @@ export class Player {
   isFolded: boolean = false
   gameID: string | null = null
 
-  constructor( public readonly name: string, readonly id: string = randomUUID()){}
+  constructor( public readonly name: string, public readonly id: string = randomUUID()){}
   
   
   receiveCards(cards: Card[]) {
@@ -19,7 +19,7 @@ export class Player {
     if (bet > this.money) {
       throw new Error("Not enough chips");
     }
-    this.money -= bet;
+    this.money -= bet - this.bet;
     this.bet = bet
   }
 

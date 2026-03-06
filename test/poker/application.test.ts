@@ -7,7 +7,9 @@ import { Call } from "@/modules/poker/application/use-cases/Call"
 import { GameMapper, GameRow } from "@/modules/poker/infrastructure/mappers/GameMapper"
 import { PlayerMapper, PlayerRow } from "@/modules/poker/infrastructure/mappers/PlayerMapper"
 import { Check } from "@/modules/poker/application/use-cases/Check"
-import { GameDTOMapper } from "@/modules/poker/application/mappers/GameDTOMapper"
+import { evaluateHand } from "@/modules/poker/domain/services/HandEvaluator"
+import { Player } from "@/modules/poker/domain/entities/Player"
+import { Raise } from "@/modules/poker/application/use-cases/Raise"
 
 describe('Poker application test', () => {
   let games: Record<string, GameRow> = {}
@@ -102,6 +104,7 @@ describe('Poker application test', () => {
     await call.execute(game.id)    
     expect((await mockRepository.getGameById(game.id))?.street).toBe(1)
     
+    
     await check.execute(game.id)
     await check.execute(game.id)
     expect((await mockRepository.getGameById(game.id))?.street).toBe(2)
@@ -110,12 +113,70 @@ describe('Poker application test', () => {
     await check.execute(game.id)
     expect((await mockRepository.getGameById(game.id))?.street).toBe(3)
     
+    let winner: Player
+
+    const gameToCheckWinner = await mockRepository.getGameById(game.id)
+    
+    gameToCheckWinner?.players.reduce(
+      (preValue, player) => {
+        const handValue = evaluateHand(player.cards, gameToCheckWinner?.cards) 
+        if(handValue > preValue) {
+          winner = player
+          return handValue
+        }
+        return preValue
+      }, 
+      0
+    )
+
+    
+    for(const player of ((await mockRepository.getGameById(game.id)))!.players) {
+      expect(player.bet).toBe(40)
+      expect(player.money).toBe(960)
+    }
+    
     await check.execute(game.id)
     await check.execute(game.id)
     expect((await mockRepository.getGameById(game.id))?.street).toBe(0)
     
+    console.log(((await mockRepository.getGameById(game.id)))!.players)
     
-    const updatedGame = await mockRepository.getGameById(game.id)
-    expect(updatedGame?.currentTurnPlayer).toBeNull()
+    const updatedGame = await mockRepository.getGameById(game.id)!
+
+    if(!updatedGame) throw new Error()
+
+
+    for(const player of updatedGame.players) {
+      expect(player.bet).toBe(0)
+    }
+    
+    expect((await mockRepository.getPlayerById(winner!.id))?.money).toBe(1040)
+    expect(updatedGame.currentTurnPlayer).toBeNull()
+  })
+
+  test('you can raise', async () => {
+    const createGame = new CreateGame(mockRepository)
+    const createPlayer = new CreatePlayer(mockRepository)
+    const playerOne = await createPlayer.execute('juan')
+    const game = await createGame.execute(playerOne.id)
+    if(!game) return
+    
+    const joinGame = new JoinGame(mockRepository)
+    const playerTwo = await createPlayer.execute('clara')
+    await joinGame.execute(game.id, playerTwo.id)
+    
+    const startGame = new StartGame(mockRepository)
+    const call = new Call(mockRepository)
+    const raise = new Raise(mockRepository)
+    
+    await startGame.execute(game.id)
+    
+    await call.execute(game.id)
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(1)
+
+    await raise.execute(game.id, 200)
+    await call.execute(game.id)
+    
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(2)
   })
 })
