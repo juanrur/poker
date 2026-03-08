@@ -180,8 +180,6 @@ export class Game {
 
     winner.money += this.pot
 
-    console.log({winner: winner.name})
-
     this.players.forEach(player => {
       player.bet = 0
       player.cards = []
