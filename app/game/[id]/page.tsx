@@ -34,8 +34,6 @@ export default function Home() {
     return moveToCenter(game.players, myPlayer);
   }, [game?.players, myPlayer]);
 
-  console.log('turn', game?.currentTurnPlayer?.id)
-
   if(game === null || !myPlayer) return <div>loading</div>
 
   return (
