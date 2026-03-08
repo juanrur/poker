@@ -14,8 +14,6 @@ export default function Home() {
   if(!player) redirect('/')
   
   const myPlayer = game?.players.find(playerIn => playerIn.id === player.id)
-
-  if(game?.id && !myPlayer) throw new Error('My player not found')
  
   const isMyTurn = game?.currentTurnPlayer?.id === myPlayer?.id;
 
