@@ -11,7 +11,7 @@ import { evaluateHand } from "@/modules/poker/domain/services/HandEvaluator"
 import { Player } from "@/modules/poker/domain/entities/Player"
 import { Raise } from "@/modules/poker/application/use-cases/Raise"
 import { Fold } from "@/modules/poker/application/use-cases/Fold"
-import { GameDTOMapper } from "@/modules/poker/application/mappers/GameDTOMapper"
+import { Game } from "@/modules/poker/domain/entities/Game"
 
 describe('Poker application test', () => {
   let games: Record<string, GameRow> = {}
@@ -38,44 +38,47 @@ describe('Poker application test', () => {
       return PlayerMapper.toDomain(players[playerId]) ?? null
     }),
   } 
+  
+  let game: Game
+  let startGame: StartGame
+  let fold: Fold
+  let check: Check
+  let call: Call
+  let raise: Raise
 
-
-  beforeEach(() => {
+  beforeEach(async () => {
     games = {}
     players = {}
-  })
-
-  test('can create a game and join players', async () => {
     const createGame = new CreateGame(mockRepository)
     const createPlayer = new CreatePlayer(mockRepository)
     const playerOne = await createPlayer.execute('juan')
 
-    const game = await createGame.execute(playerOne.id)
-    
+    const newGame = await createGame.execute(playerOne.id) 
+    if(!newGame) return
+    game = newGame
+
     if(!game) return
 
     const joinGame = new JoinGame(mockRepository)
     const playerTwo = await createPlayer.execute('clara')
     await joinGame.execute(game.id, playerTwo.id)
+    
+    startGame = new StartGame(mockRepository)
+    fold = new Fold(mockRepository) 
+    check = new Check(mockRepository) 
+    call = new Call(mockRepository) 
+    raise = new Raise(mockRepository) 
 
+  })
+  
+  test('can create a game and join players', async () => {
     const updatedGame = await mockRepository.getGameById(game.id)
     expect(updatedGame?.players).toHaveLength(2)
   })
 
- 
 
   test('street advance', async () => {
-    const createGame = new CreateGame(mockRepository)
-    const createPlayer = new CreatePlayer(mockRepository)
-    const playerOne = await createPlayer.execute('juan')
-    const game = await createGame.execute(playerOne.id)
-    if(!game) return
 
-    const joinGame = new JoinGame(mockRepository)
-    const playerTwo = await createPlayer.execute('clara')
-    await joinGame.execute(game.id, playerTwo.id)
-
-    const startGame = new StartGame(mockRepository)
     await startGame.execute(game.id)
     
     
@@ -86,21 +89,7 @@ describe('Poker application test', () => {
     expect(updatedGame?.street).toBe(1)
   })
   
-  test('play a game', async () => {
-    const createGame = new CreateGame(mockRepository)
-    const createPlayer = new CreatePlayer(mockRepository)
-    const playerOne = await createPlayer.execute('juan')
-    const game = await createGame.execute(playerOne.id)
-    if(!game) return
-    
-    const joinGame = new JoinGame(mockRepository)
-    const playerTwo = await createPlayer.execute('clara')
-    await joinGame.execute(game.id, playerTwo.id)
-    
-    const startGame = new StartGame(mockRepository)
-    const call = new Call(mockRepository)
-    const check = new Check(mockRepository)
-    
+  test('winner is who should be', async () => {
     await startGame.execute(game.id)
     
     await call.execute(game.id)    
@@ -155,20 +144,6 @@ describe('Poker application test', () => {
   })
 
   test('you can raise', async () => {
-    const createGame = new CreateGame(mockRepository)
-    const createPlayer = new CreatePlayer(mockRepository)
-    const playerOne = await createPlayer.execute('juan')
-    const game = await createGame.execute(playerOne.id)
-    if(!game) return
-    
-    const joinGame = new JoinGame(mockRepository)
-    const playerTwo = await createPlayer.execute('clara')
-    await joinGame.execute(game.id, playerTwo.id)
-    
-    const startGame = new StartGame(mockRepository)
-    const call = new Call(mockRepository)
-    const raise = new Raise(mockRepository)
-    
     await startGame.execute(game.id)
     
     await call.execute(game.id)
@@ -182,20 +157,6 @@ describe('Poker application test', () => {
   })
 
   test('game finish when everyone is folded',async () => {
-    const createGame = new CreateGame(mockRepository)
-    const createPlayer = new CreatePlayer(mockRepository)
-    const playerOne = await createPlayer.execute('juan')
-    const game = await createGame.execute(playerOne.id)
-    if(!game) return
-    
-    const joinGame = new JoinGame(mockRepository)
-    const playerTwo = await createPlayer.execute('clara')
-    await joinGame.execute(game.id, playerTwo.id)
-    
-    const startGame = new StartGame(mockRepository)
-    const call = new Call(mockRepository)
-    const fold = new Fold(mockRepository)
-
     await startGame.execute(game.id)    
     await call.execute(game.id)
 
