@@ -89,28 +89,27 @@ describe('Poker application test', () => {
     expect(updatedGame?.street).toBe(1)
   })
   
-  test('winner is who should be', async () => {
+  test('winner is who should be and money is well split', async () => {
     await startGame.execute(game.id)
     
     await call.execute(game.id)    
+    
     expect((await mockRepository.getGameById(game.id))?.street).toBe(1)
-    
-    
     await check.execute(game.id)
     await check.execute(game.id)
+    
     expect((await mockRepository.getGameById(game.id))?.street).toBe(2)
-    
     await check.execute(game.id)
     await check.execute(game.id)
-    expect((await mockRepository.getGameById(game.id))?.street).toBe(3)
     
+    // check for future winner
     let winner: Player
-
-    const gameToCheckWinner = await mockRepository.getGameById(game.id)
     
-    gameToCheckWinner?.players.reduce(
+    const updatedGameStreet2 = await mockRepository.getGameById(game.id)
+    
+    updatedGameStreet2?.players.reduce(
       (preValue, player) => {
-        const handValue = evaluateHand(player.cards, gameToCheckWinner?.cards) 
+        const handValue = evaluateHand(player.cards, updatedGameStreet2?.cards) 
         if(handValue > preValue) {
           winner = player
           return handValue
@@ -119,27 +118,34 @@ describe('Poker application test', () => {
       }, 
       0
     )
-
     
+    // check all player have the correct bet
     for(const player of ((await mockRepository.getGameById(game.id)))!.players) {
       expect(player.bet).toBe(40)
       expect(player.money).toBe(960)
     }
+    console.log((await mockRepository.getGameById(game.id))?.pot)
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(3)
+    await check.execute(game.id)
+    await check.execute(game.id)
+    // end of game
     
-    await check.execute(game.id)
-    await check.execute(game.id)
     expect((await mockRepository.getGameById(game.id))?.street).toBe(0)
         
+
     const updatedGame = await mockRepository.getGameById(game.id)!
-
-    if(!updatedGame) throw new Error()
-
+    if(!updatedGame) return
 
     for(const player of updatedGame.players) {
       expect(player.bet).toBe(0)
     }
     
     expect((await mockRepository.getPlayerById(winner!.id))?.money).toBe(1040)
+    expect((await mockRepository.getGameById(game.id))
+      ?.players
+      .find(player => player.id !== winner.id)
+      ?.money
+    ).toBe(960)
     expect(updatedGame.currentTurnPlayer).toBeNull()
   })
 
