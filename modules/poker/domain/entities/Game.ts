@@ -133,7 +133,7 @@ export class Game {
         this.roundState = transition(this.roundState, RoundEvents.ALL_PASSED)
       }
     }
-    
+
     this.currentTurnPlayer = this.players[nextPlayerIndex]
   }
 
@@ -158,7 +158,7 @@ export class Game {
 
   shouldFinishGame() {
     const allPlayerAreFolded = this.players
-    .filter(player => player.id !== this.dealer?.id)
+    .filter(player => player.id !== this.currentTurnPlayer?.id)
     .every(player => player.isFolded)
     const gameIsOver = this.street === 3 && this.roundState === RoundStates.COMPLETE
     return gameIsOver || allPlayerAreFolded

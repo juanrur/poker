@@ -8,7 +8,6 @@ export enum RoundEvents {
   RAISE = 'RAISE',
   ALL_PASSED = 'ALL_PASSED',
   ALL_EQUAL = 'ALL_EQUAL',
-  ALL_FOLDED = 'ALL_FOLDED',
   FINISHED_ROUND = 'FINISHED_ROUND'
 }
 
@@ -20,7 +19,6 @@ export const machine: any = {
   },
   INCREASED: {
     ALL_EQUAL: RoundStates.COMPLETE,
-    ALL_FOLDED: RoundStates.COMPLETE
   },
   COMPLETE: {
     FINISHED_ROUND: RoundStates.ACTIVE

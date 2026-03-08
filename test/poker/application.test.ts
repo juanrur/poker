@@ -10,7 +10,8 @@ import { Check } from "@/modules/poker/application/use-cases/Check"
 import { evaluateHand } from "@/modules/poker/domain/services/HandEvaluator"
 import { Player } from "@/modules/poker/domain/entities/Player"
 import { Raise } from "@/modules/poker/application/use-cases/Raise"
-import { PlayerDTOMapper } from "@/modules/poker/application/mappers/PlayerDTOMapper"
+import { Fold } from "@/modules/poker/application/use-cases/Fold"
+import { GameDTOMapper } from "@/modules/poker/application/mappers/GameDTOMapper"
 
 describe('Poker application test', () => {
   let games: Record<string, GameRow> = {}
@@ -178,5 +179,28 @@ describe('Poker application test', () => {
 
     
     expect((await mockRepository.getGameById(game.id))?.street).toBe(2)
+  })
+
+  test('game finish when everyone is folded',async () => {
+    const createGame = new CreateGame(mockRepository)
+    const createPlayer = new CreatePlayer(mockRepository)
+    const playerOne = await createPlayer.execute('juan')
+    const game = await createGame.execute(playerOne.id)
+    if(!game) return
+    
+    const joinGame = new JoinGame(mockRepository)
+    const playerTwo = await createPlayer.execute('clara')
+    await joinGame.execute(game.id, playerTwo.id)
+    
+    const startGame = new StartGame(mockRepository)
+    const call = new Call(mockRepository)
+    const fold = new Fold(mockRepository)
+
+    await startGame.execute(game.id)    
+    await call.execute(game.id)
+
+    await fold.execute(game.id)
+
+    expect((await mockRepository.getGameById(game.id))?.street).toBe(0)
   })
 })
