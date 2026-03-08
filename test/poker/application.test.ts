@@ -10,6 +10,7 @@ import { Check } from "@/modules/poker/application/use-cases/Check"
 import { evaluateHand } from "@/modules/poker/domain/services/HandEvaluator"
 import { Player } from "@/modules/poker/domain/entities/Player"
 import { Raise } from "@/modules/poker/application/use-cases/Raise"
+import { PlayerDTOMapper } from "@/modules/poker/application/mappers/PlayerDTOMapper"
 
 describe('Poker application test', () => {
   let games: Record<string, GameRow> = {}
@@ -138,9 +139,7 @@ describe('Poker application test', () => {
     await check.execute(game.id)
     await check.execute(game.id)
     expect((await mockRepository.getGameById(game.id))?.street).toBe(0)
-    
-    console.log(((await mockRepository.getGameById(game.id)))!.players)
-    
+        
     const updatedGame = await mockRepository.getGameById(game.id)!
 
     if(!updatedGame) throw new Error()
@@ -176,6 +175,7 @@ describe('Poker application test', () => {
 
     await raise.execute(game.id, 200)
     await call.execute(game.id)
+
     
     expect((await mockRepository.getGameById(game.id))?.street).toBe(2)
   })

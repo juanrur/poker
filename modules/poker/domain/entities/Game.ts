@@ -145,8 +145,6 @@ export class Game {
     this.pot += amount;
     this.actualBet = amount;
     this.roundState = transition(this.roundState, RoundEvents.RAISE);
-
-    this.advanceTurn();
   }
 
   foldCurrentPlayer() {
