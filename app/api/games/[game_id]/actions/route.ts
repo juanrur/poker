@@ -37,8 +37,6 @@ export async function PUT (request: Request, { params }: { params: Promise<{game
 
   const game = await gameRepository.getGameById(gameId)
 
-  console.log({playerId, turn: game?.currentTurnPlayer?.id})
-
   if(playerId !== game?.currentTurnPlayer?.id) {
     return NextResponse.json('You have not the turn', { status: 401 })
   }
