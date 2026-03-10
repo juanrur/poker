@@ -1,5 +1,4 @@
 ### TODOS
 
-- [ ] Hacer el supabase presence como backup por si fallan los otros que se borre al rato el usuario
-- [X] Foldear
-- [ ] Que no puedas iniciar partida si no hay mas de un jugador
+- [ ] Handle user leaving at a game
+- [ ] Handle all in and what happen when you have no money to raise
