@@ -46,8 +46,14 @@ export class Game {
   }
 
   dealCards() {
-    // handle when the players exceed the max number
-    this.players.forEach((player) => player.cards = [this.deck.pop(), this.deck.pop()])
+    // TODO: handle when the players exceed the max number
+    this.players.forEach((player) => {
+      const cardOne = this.deck.pop()
+      const cardTwo = this.deck.pop()
+      if(cardOne && cardTwo) {
+        player.cards = [cardOne, cardTwo]
+      }
+    }) 
   }
 
   assignTurnAndDealer() {

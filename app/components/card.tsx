@@ -1,14 +1,14 @@
 // TODO: personalizar los tipos
 
 export default function Card({ suit, number }: { suit: string; number: number; }) {
-  const symbols = {
+  const symbols: Record<string, string> = {
     heart: "❤️",
     diamond: "♦️",
     spade: "♠️",
     club: "♣️",
   };
 
-  const numbers = {
+  const numbers: Record<number, string> = {
     1: "A",
     2: "2",
     3: "3",
