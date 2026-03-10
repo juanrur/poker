@@ -1,4 +1,5 @@
 ### TODOS
 
 - [ ] Handle user leaving at a game
-- [ ] Handle all in and what happen when you have no money to raise
+- [ ] Handle all ins and what happens when you don't have money to raise
+- [ ] Simplify game ids
