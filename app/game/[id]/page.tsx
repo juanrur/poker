@@ -14,6 +14,8 @@ export default function Home() {
   if(!player) redirect('/')
   
   const myPlayer = game?.players.find(playerIn => playerIn.id === player.id)
+
+  console.log(myPlayer)
  
   const isMyTurn = game?.currentTurnPlayer?.id === myPlayer?.id;
 
@@ -30,7 +32,7 @@ export default function Home() {
   }
 
   const sortedPlayers = useMemo(() => {
-    if(!game) return []
+    if(!game || !myPlayer) return []
     return moveToCenter(game.players, myPlayer);
   }, [game?.players, myPlayer]);
 
