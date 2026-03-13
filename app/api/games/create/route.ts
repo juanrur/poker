@@ -16,6 +16,6 @@ export async function POST (request: NextRequest) {
 
   if(!game) return NextResponse.json(null, {status: 500})
 
-  return NextResponse.json({gameId: game.id}, {status: 200})
+  return NextResponse.json({joinCode: game.joinCode}, {status: 200})
 
 }

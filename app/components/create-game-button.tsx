@@ -6,8 +6,6 @@ export default function CreateGameButton() {
   const { player } = usePlayer()
 
   async function handleCreateGame() {
-    let newGameId
-
     fetch(`/api/games/create`, {
       method: 'POST',
       body: JSON.stringify({
@@ -16,8 +14,8 @@ export default function CreateGameButton() {
     })
     .then(res => res.json())
     .then(data => {
-      newGameId = data.gameId
-      redirect(`/game/${newGameId}`)
+      const joinCode = data.joinCode
+      redirect(`/game/${joinCode}`)
     })
 
 
