@@ -5,9 +5,11 @@ import { GameDTO } from "../../application/use-cases/dtos/GameDTO";
 import { ActionsDTO } from "@/app/api/games/[game_id]/actions/route";
 import { usePlayer } from "./usePlayer";
 
-export function useGame (gameId: GameDTO['id']) {
+export function useGame (joinCode: GameDTO['joinCode']) {
   const [game, setGame] = useState<GameDTO | null>(null)
   const { playerToken } = usePlayer()
+
+  const gameId = game?.id
 
   const realtime = new SupabaseGameRealtime(createClient())
   
@@ -15,13 +17,14 @@ export function useGame (gameId: GameDTO['id']) {
 
   // initial load
   useEffect(() => {
-    fetch(`/api/games/${gameId}`)
+    fetch(`/api/games/join/${joinCode}`)
     .then(res => res.json())
     .then(data => setGame(data))
   }, [])
   
   // subscribe to updates
   useEffect(() => {
+    if(!gameId) return 
     const unsubscribe = realtime.subscribe(
       gameId,
       async () => {
@@ -32,7 +35,7 @@ export function useGame (gameId: GameDTO['id']) {
     )
 
     return unsubscribe
-  }, [])
+  }, [game])
 
   function raise (amount: number) {
     const dto: ActionsDTO = {

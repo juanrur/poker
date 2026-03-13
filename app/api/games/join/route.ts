@@ -6,13 +6,13 @@ export type JoinDTO = {
   playerId: string
 }
 
-export async function PUT (request: Request, { params }: { params: Promise<{game_id: string}>}) {
-  const { game_id: gameId } = await params 
+export async function PUT (request: Request, { params }: { params: Promise<{game_code: string}>}) {
+  const { game_code: gameCode } = await params 
   const { playerId } = await request.json() as JoinDTO
 
   const gameRepository = new SupabaseGameRepository()
   const join = new JoinGame(gameRepository)
-  await join.execute(gameId, playerId)
+  await join.execute(gameCode, playerId)
 
   return NextResponse.json(null, {status: 200})
 }

@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import { redirect } from "next/navigation";
 import { usePlayer } from "@/modules/poker/presentation/hooks/usePlayer";
-import { JoinDTO } from "../api/games/[game_id]/join/route";
+import { JoinDTO } from "../api/games/join/route";
 
 export default function JoinGameButton() {
   const dialog = useRef<HTMLDialogElement>(null);

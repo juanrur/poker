@@ -8,8 +8,8 @@ import { useGame } from "@/modules/poker/presentation/hooks/useGame";
 import { usePlayer } from "@/modules/poker/presentation/hooks/usePlayer";
 
 export default function Home() {
-  const { id } = useParams() as {id: string}
-  const { game, call, check, fold, raise, leave, start} = useGame(id)
+  const { joinCode } = useParams() as {joinCode: string}
+  const { game, call, check, fold, raise, leave, start} = useGame(joinCode)
   const { player } = usePlayer()
   if(!player) redirect('/')
   

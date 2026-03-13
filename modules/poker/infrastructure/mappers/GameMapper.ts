@@ -15,6 +15,7 @@ export interface GameRow {
   street: number | null; // int2
   cards: any; // jsonb
   has_incremented: boolean | null;
+  join_code: string;
 }
 
 export interface PlayerRow {
@@ -31,7 +32,8 @@ export interface PlayerRow {
 export class GameMapper {
   static toDomain(playerRows: PlayerRow[], gameRow: GameRow): Game {
     // id: string; // uuid
-    const game = new Game(gameRow.id)
+    // join_code: string
+    const game = new Game(gameRow.join_code, gameRow.id)
     game.players = playerRows.map(playerRow => {
       // id: string; // uuid
       // name: string; // text
@@ -78,10 +80,11 @@ export class GameMapper {
       actual_bet: game.actualBet,
       deck: game.deck,
       small_blind: game.smallBlind,
-      dealer: game.dealer?.id ?? null, // o game.dealer?.id
+      dealer: game.dealer?.id ?? null,
       street: game.street,
       cards: game.cards,
-      has_incremented: game.roundState === RoundStates.INCREASED
+      has_incremented: game.roundState === RoundStates.INCREASED,
+      join_code: game.joinCode
     }   
 
     const playerRows: PlayerRow[] = game.players.map(p => ({

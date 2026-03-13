@@ -13,7 +13,8 @@ export class GameDTOMapper {
     deck,
     cards,
     pot,    
-    id, 
+    joinCode,
+    id
   }: Game): GameDTO {
     return {
       roundState, 
@@ -26,10 +27,12 @@ export class GameDTOMapper {
       deck,
       cards,
       pot,    
+      joinCode,
       id
     }
   }
 
+  // TODO: no esta bien del to esto porque al game le hace falta el id porque ya tendría que estar definido
   static fromDTO({
     roundState, 
     players, 
@@ -41,9 +44,9 @@ export class GameDTOMapper {
     deck,
     cards,
     pot,    
-    id
+    joinCode
   }: GameDTO): Game {
-    const game = new Game(id)
+    const game = new Game(joinCode)
     game.roundState = roundState
     game.players = players
     game.actualBet = actualBet

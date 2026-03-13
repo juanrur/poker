@@ -2,10 +2,10 @@ import { GameDTOMapper } from "@/modules/poker/application/mappers/GameDTOMapper
 import { SupabaseGameRepository } from "@/modules/poker/infrastructure/repositories/SupabaseGameRepository";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET (_: any, { params }: { params: Promise<{game_id: string}>}) {
-  const {game_id: gameId} = await params 
+export async function GET (_: any, { params }: { params: Promise<{game_code: string}>}) {
+  const {game_code: joinCode} = await params 
   const gameRepository = new SupabaseGameRepository()
-  const response = await gameRepository.getGameById(gameId)
+  const response = await gameRepository.getGameByJoinCode(joinCode)
   
   if(!response) return NextResponse.json(null, {status: 500})
   

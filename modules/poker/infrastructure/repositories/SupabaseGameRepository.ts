@@ -11,6 +11,26 @@ export class SupabaseGameRepository implements GameRepository{
     return await createClient()
   }
 
+  async getGameByJoinCode(joinCode: Game["id"]): Promise<Game | null> {
+    const supabase = await this.getClient()
+    const { data: gameData } = await supabase
+    .from('games')
+    .select('*')
+    .eq('join_code', joinCode)
+    .single()
+    
+    if(!gameData) return null
+
+    const { data: playersData } = await supabase
+    .from('players')
+    .select('*')
+    .eq('game', gameData.id)
+
+    if(!playersData) return null
+    
+    return GameMapper.toDomain(playersData, gameData)
+  }
+
   async getGameById(gameId: Game["id"]): Promise<Game | null> {
     const supabase = await this.getClient()
     const { data: gameData } = await supabase

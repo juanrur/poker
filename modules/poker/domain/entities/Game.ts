@@ -4,6 +4,7 @@ import { Card } from "./Card";
 import { Player } from "./Player";
 import { RoundEvents, RoundStates, transition } from "../machines/RoundMachine";
 import { evaluateHand } from "../services/HandEvaluator";
+import { generateCode } from "../services/GameCodeGenerator";
 
 export class Game {
   roundState: RoundStates = RoundStates.ACTIVE
@@ -17,7 +18,7 @@ export class Game {
   cards: Card[] = [] 
   pot: number = 0
   
-  constructor(readonly id: string = randomUUID(), readonly joinCode: string){}
+  constructor(readonly joinCode: string = generateCode(), readonly id: string = randomUUID()){}
 
   addPlayer(player: Player) {
     this.players.push(player);

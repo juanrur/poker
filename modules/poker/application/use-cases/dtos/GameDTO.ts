@@ -14,4 +14,5 @@ export type GameDTO = {
   cards: Card[]  
   pot: number   
   readonly id: string
+  readonly joinCode: string
 }
