@@ -8,7 +8,7 @@ import { useGame } from "@/modules/poker/presentation/hooks/useGame";
 import { usePlayer } from "@/modules/poker/presentation/hooks/usePlayer";
 
 export default function Home() {
-  const { joinCode } = useParams() as {joinCode: string}
+  const { code: joinCode } = useParams() as {code: string}
   const { game, call, check, fold, raise, leave, start} = useGame(joinCode)
   const { player } = usePlayer()
   if(!player) redirect('/')
@@ -20,7 +20,7 @@ export default function Home() {
   const isMyTurn = game?.currentTurnPlayer?.id === myPlayer?.id;
 
   function copyID () {
-    navigator.clipboard.writeText(game!.id)
+    navigator.clipboard.writeText(game!.joinCode)
   }
 
   function moveToCenter (playerArray: any[], player: any) {
@@ -50,7 +50,7 @@ export default function Home() {
       {
         game &&
         <header>
-          <h1 className="my-4">ID: {game.id}</h1>
+          <h1 className="my-4">Code: {game.joinCode}</h1>
           <button onClick={copyID}>copy</button>
           <div className="flex gap-2">
             {game.cards?.map((card, idx) => (

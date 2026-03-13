@@ -6,7 +6,7 @@ export class JoinGame {
   constructor(private gameRepo: GameRepository) {}
   
   async execute(gameCode: Game['joinCode'], playerId: Player['id']) {
-    const game = await this.gameRepo.getGameByCode(gameCode)
+    const game = await this.gameRepo.getGameByJoinCode(gameCode)
     const player = await this.gameRepo.getPlayerById(playerId)
 
     if(!game) throw new Error('Game not found')

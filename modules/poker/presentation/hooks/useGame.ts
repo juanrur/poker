@@ -28,7 +28,7 @@ export function useGame (joinCode: GameDTO['joinCode']) {
     const unsubscribe = realtime.subscribe(
       gameId,
       async () => {
-        fetch(`/api/games/${gameId}`)
+        fetch(`/api/games/join/${joinCode}`)
         .then(res => res.json())
         .then(data => setGame(data))
       }

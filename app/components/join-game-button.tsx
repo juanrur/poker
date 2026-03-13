@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import { redirect } from "next/navigation";
 import { usePlayer } from "@/modules/poker/presentation/hooks/usePlayer";
-import { JoinDTO } from "../api/games/join/route";
+import { JoinDTO } from "../api/games/join/[game_code]/route";
 
 export default function JoinGameButton() {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -14,18 +14,20 @@ export default function JoinGameButton() {
   async function handleJoinGame(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const gameId = formData.get("gameId") as string;
+    const gameJoinCodeForm = formData.get("gameJoinCode") as string;
+    const gameJoinCode = gameJoinCodeForm.toUpperCase().trim()
 
+    if(!playerId) return
+    
     const dto: JoinDTO = {
-      playerId: playerId!
+      playerId
     } 
-    fetch(`/api/games/${gameId}/join`, {
+
+    fetch(`/api/games/join/${gameJoinCode}`, {
       method: 'PUT',
-      body: JSON.stringify({
-        playerId
-      })
+      body: JSON.stringify(dto)
     })
-    redirect(`/game/${gameId}`)
+    redirect(`/game/${gameJoinCode}`)
   }
 
   return (
@@ -38,8 +40,8 @@ export default function JoinGameButton() {
         <form 
         className="flex flex-col"
         onSubmit={handleJoinGame}>
-          <label htmlFor="gameId">Insert Game ID:</label>
-          <input type="text" name="gameId" id="gameId" className="border"></input>
+          <label htmlFor="gameId">Insert Game Code:</label>
+          <input type="text" name="gameJoinCode" id="gameJoinCode" className="border"></input>
         </form>
       </dialog>
     </>
