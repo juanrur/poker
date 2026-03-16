@@ -2,13 +2,14 @@ import { Game } from "../../domain/entities/Game";
 import { GameRepository } from "../../domain/repositories/GameRepository";
 import { GameDTOMapper } from "../mappers/GameDTOMapper";
 import { PlayerDTOMapper } from "../mappers/PlayerDTOMapper";
+import { GameDTO } from "./dtos/GameDTO";
 
 export class Check {
   constructor(private gameRepo: GameRepository) {}
   
-  async execute(gameId: Game['id']) {
+  async execute(gameId: Game['id']): Promise<GameDTO | null> {
     const game = await this.gameRepo.getGameById(gameId)
-    if(!game) return
+    if(!game) return null
     
     game.advanceTurn()
     
