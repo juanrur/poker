@@ -1,5 +1,6 @@
 import { Game } from "../../domain/entities/Game"
 import { GameRepository } from "../../domain/repositories/GameRepository"
+import { GameDTOMapper } from "../mappers/GameDTOMapper"
 
 export class Call {
   constructor(private gameRepo: GameRepository) {}
@@ -16,5 +17,7 @@ export class Call {
     if (game.shouldAdvanceStreet()) game.advanceStreet()
     
     await this.gameRepo.save(game)
+
+    return GameDTOMapper.toDTO(game)
   }
 }

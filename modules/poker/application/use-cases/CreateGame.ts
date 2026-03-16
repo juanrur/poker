@@ -1,11 +1,13 @@
 import { Game } from "@/modules/poker/domain/entities/Game";
 import { GameRepository } from "@/modules/poker/domain/repositories/GameRepository";
 import { generateCode } from "../../domain/services/GameCodeGenerator";
+import { GameDTOMapper } from "../mappers/GameDTOMapper";
+import { GameDTO } from "./dtos/GameDTO";
 
 export class CreateGame {
   constructor(private gameRepo: GameRepository) {}
 
-  async execute(playerId: string): Promise<Game | null> {
+  async execute(playerId: string): Promise<GameDTO | null> {
     
     // generate code that is not used
     let code
@@ -24,6 +26,6 @@ export class CreateGame {
 
     await this.gameRepo.save(game);
 
-    return game;
+    return GameDTOMapper.toDTO(game);
   }
 }

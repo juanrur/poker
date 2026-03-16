@@ -1,5 +1,6 @@
 import { Game } from "../../domain/entities/Game";
 import { GameRepository } from "../../domain/repositories/GameRepository";
+import { GameDTOMapper } from "../mappers/GameDTOMapper";
 
 export class Raise {
   constructor(private gameRepo: GameRepository) {}
@@ -10,5 +11,7 @@ export class Raise {
     game.raiseCurrentPlayer(amount)
     game.advanceTurn()
     await this.gameRepo.save(game)
+    
+    return GameDTOMapper.toDTO(game)
   } 
 }

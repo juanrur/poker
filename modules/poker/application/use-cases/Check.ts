@@ -1,5 +1,6 @@
 import { Game } from "../../domain/entities/Game";
 import { GameRepository } from "../../domain/repositories/GameRepository";
+import { GameDTOMapper } from "../mappers/GameDTOMapper";
 import { PlayerDTOMapper } from "../mappers/PlayerDTOMapper";
 
 export class Check {
@@ -16,5 +17,7 @@ export class Check {
     if (game.shouldAdvanceStreet()) game.advanceStreet()
       
     await this.gameRepo.save(game)
+    
+    return GameDTOMapper.toDTO(game)
   } 
 }

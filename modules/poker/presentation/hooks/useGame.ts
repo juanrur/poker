@@ -4,10 +4,12 @@ import { createClient } from "@/app/db/create-client-client";
 import { GameDTO } from "../../application/use-cases/dtos/GameDTO";
 import { ActionsDTO } from "@/app/api/games/[game_id]/actions/route";
 import { usePlayer } from "./usePlayer";
+import { GameDTOMapper } from "../../application/mappers/GameDTOMapper";
+import { Raise } from "../../application/use-cases/Raise";
 
 export function useGame (joinCode: GameDTO['joinCode']) {
   const [game, setGame] = useState<GameDTO | null>(null)
-  const { playerToken } = usePlayer()
+  const { playerToken, player } = usePlayer()
 
   const gameId = game?.id
 

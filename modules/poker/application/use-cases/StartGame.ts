@@ -1,5 +1,6 @@
 import { Game } from "../../domain/entities/Game";
 import { GameRepository } from "../../domain/repositories/GameRepository";
+import { GameDTOMapper } from "../mappers/GameDTOMapper";
 
 export class StartGame {
   constructor(private gameRepo: GameRepository) {}
@@ -12,5 +13,7 @@ export class StartGame {
     game.assignTurnAndDealer()
     game.postSmallAndBigBlind()
     await this.gameRepo.save(game)
+
+    return GameDTOMapper.toDTO(game)
   } 
 }
