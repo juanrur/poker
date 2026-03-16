@@ -4,6 +4,8 @@ import { createClient } from "@/app/db/create-client-client";
 import { GameDTO } from "../../application/use-cases/dtos/GameDTO";
 import { ActionsDTO } from "@/app/api/games/[game_id]/actions/route";
 import { usePlayer } from "./usePlayer";
+import { GameDTOMapper } from "../../application/mappers/GameDTOMapper";
+import { Raise } from "../../application/use-cases/Raise";
 
 export function useGame (joinCode: GameDTO['joinCode']) {
   const [game, setGame] = useState<GameDTO | null>(null)
@@ -62,6 +64,8 @@ export function useGame (joinCode: GameDTO['joinCode']) {
         body: JSON.stringify(dto)
       }
     )
+    .then(res => res.json())
+    .then(data => setGame(data))
   }  
   
   function check () {
@@ -75,6 +79,8 @@ export function useGame (joinCode: GameDTO['joinCode']) {
         body: JSON.stringify(dto)
       }
     )
+    .then(res => res.json())
+    .then(data => setGame(data))
   }  
 
   function call () {
@@ -87,8 +93,9 @@ export function useGame (joinCode: GameDTO['joinCode']) {
         method: 'PUT',
         body: JSON.stringify(dto)
       }
-    ).then(res=> res.json())
-    .then(data => console.log({error: data}))
+    )
+    .then(res => res.json())
+    .then(data => setGame(data))
   }
   
   function leave () { 
@@ -102,6 +109,8 @@ export function useGame (joinCode: GameDTO['joinCode']) {
     fetch(`/api/games/${gameId}/start`,
       {method: 'PUT'}
     )
+    .then(res => res.json())
+    .then(data => setGame(data))
   }
 
   return {game, raise, fold, check, call, leave, start}

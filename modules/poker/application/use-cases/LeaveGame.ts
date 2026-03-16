@@ -1,6 +1,7 @@
 import { Game } from "../../domain/entities/Game";
 import { Player } from "../../domain/entities/Player";
 import { GameRepository } from "../../domain/repositories/GameRepository";
+import { GameDTOMapper } from "../mappers/GameDTOMapper";
 
 export class LeaveGame {
   constructor(private gameRepo: GameRepository) {}
