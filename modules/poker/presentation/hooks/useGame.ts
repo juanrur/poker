@@ -88,8 +88,6 @@ export function useGame (joinCode: GameDTO['joinCode']) {
         body: JSON.stringify(dto)
       }
     )
-    .then(res => res.json())
-    .then(data => setGame(data))
   }  
   
   function check () {
@@ -113,8 +111,6 @@ export function useGame (joinCode: GameDTO['joinCode']) {
         body: JSON.stringify(dto)
       }
     )
-    .then(res => res.json())
-    .then(data => setGame(data))
   }  
 
   function call () {
@@ -140,8 +136,6 @@ export function useGame (joinCode: GameDTO['joinCode']) {
         body: JSON.stringify(dto)
       }
     )
-    .then(res => res.json())
-    .then(data => setGame(data))
   }
   
   function leave () { 
@@ -149,22 +143,12 @@ export function useGame (joinCode: GameDTO['joinCode']) {
     fetch(`/api/games/${gameId}/leave`,
       {method: 'DELETE'}
     )
-    .then(() => setGame(null))
   }
 
   function start () {
-    optimisticUI(game => {
-      game.initializeDeck()
-      game.dealCards()
-      game.assignTurnAndDealer()
-      game.postSmallAndBigBlind()
-      return game
-    })
     fetch(`/api/games/${gameId}/start`,
       {method: 'PUT'}
     )
-    .then(res => res.json())
-    .then(data => setGame(data))
   }
 
   return {game, raise, fold, check, call, leave, start}
