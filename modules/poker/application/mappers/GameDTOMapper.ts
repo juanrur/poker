@@ -49,12 +49,25 @@ export class GameDTOMapper {
     id
   }: GameDTO): Game {
     const game = new Game(joinCode, id)
+   
+    // Map ALL players first
+    game.players = players.map(p => PlayerDTOMapper.fromDTO(p));
+    
+    // SEARCH the exact references within the already created arrangement
+    if (currentTurnPlayer) {
+      game.currentTurnPlayer = game.players.find(
+        player => player.id === currentTurnPlayer.id
+      ) || null;
+    }
+
+    if (dealer) {
+      game.dealer = game.players.find(
+        player => player.id === dealer.id
+      ) || null;
+    }
     game.roundState = roundState
-    game.players = players.map(player => PlayerDTOMapper.fromDTO(player))
     game.actualBet = actualBet
     game.smallBlind = smallBlind
-    game.currentTurnPlayer =  currentTurnPlayer ? PlayerDTOMapper.fromDTO(currentTurnPlayer) : null
-    game.dealer = dealer ? PlayerDTOMapper.fromDTO(dealer) : null
     game.street = street
     game.deck = deck
     game.cards = cards

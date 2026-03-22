@@ -114,7 +114,8 @@ export class Game {
   }
 
   advanceTurn(){
-    const currentTurnPlayerIndex = this.players.indexOf(this.currentTurnPlayer!)
+    const currentTurnPlayerIndex = this.players.findIndex(player => player.id === this.currentTurnPlayer?.id)
+    
     let nextPlayerIndex
     let count = 1
     do {
@@ -145,9 +146,9 @@ export class Game {
 
   raiseCurrentPlayer(amount: number) {
     if (!this.currentTurnPlayer) throw new Error("No current player");
-
+    
     this.currentTurnPlayer.placeBet(amount);
-
+    
     this.pot += amount;
     this.actualBet = amount;
     this.roundState = transition(this.roundState, RoundEvents.RAISE);
