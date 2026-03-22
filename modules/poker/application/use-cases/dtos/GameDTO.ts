@@ -1,14 +1,15 @@
 import { Card } from "@/modules/poker/domain/entities/Card";
 import { Player } from "@/modules/poker/domain/entities/Player";
 import { RoundStates } from "@/modules/poker/domain/machines/RoundMachine";
+import { PlayerDTO } from "./PlayerDTO";
 
 export type GameDTO = {
   roundState: RoundStates
-  players: Player[] ;
+  players: PlayerDTO[] ;
   actualBet: number   
   smallBlind: number 
-  currentTurnPlayer: Player | null 
-  dealer: Player | null
+  currentTurnPlayer: PlayerDTO | null 
+  dealer: PlayerDTO | null
   street: number   
   deck: Card[]  
   cards: Card[]  

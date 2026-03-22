@@ -1,5 +1,6 @@
 import { Game } from "../../domain/entities/Game"
 import { GameDTO } from "../use-cases/dtos/GameDTO"
+import { PlayerDTOMapper } from "./PlayerDTOMapper"
 
 export class GameDTOMapper {
    static toDTO({
@@ -44,15 +45,16 @@ export class GameDTOMapper {
     deck,
     cards,
     pot,    
-    joinCode
+    joinCode,
+    id
   }: GameDTO): Game {
-    const game = new Game(joinCode)
+    const game = new Game(joinCode, id)
     game.roundState = roundState
-    game.players = players
+    game.players = players.map(player => PlayerDTOMapper.fromDTO(player))
     game.actualBet = actualBet
     game.smallBlind = smallBlind
-    game.currentTurnPlayer = currentTurnPlayer
-    game.dealer = dealer
+    game.currentTurnPlayer =  currentTurnPlayer ? PlayerDTOMapper.fromDTO(currentTurnPlayer) : null
+    game.dealer = dealer ? PlayerDTOMapper.fromDTO(dealer) : null
     game.street = street
     game.deck = deck
     game.cards = cards
