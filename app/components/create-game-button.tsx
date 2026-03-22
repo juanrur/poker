@@ -17,6 +17,7 @@ export default function CreateGameButton({ setCreatingGame }: {setCreatingGame: 
     .then(res => res.json())
     .then(data => {
       const joinCode = data.joinCode
+      setCreatingGame(false)
       redirect(`/game/${joinCode}`)
     })
 

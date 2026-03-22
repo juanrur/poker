@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Actions from "@/app/components/actions"
 import { redirect, useParams } from "next/navigation";
 import Card from "@/app/components/card";
@@ -17,6 +17,10 @@ export default function Home() {
   const myPlayer = game?.players.find(playerIn => playerIn.id === player.id)
 
   console.log(myPlayer)
+
+  useEffect(() => {
+    if(startingGame) setStartingGame(false)
+  }, [game?.street])
  
   const isMyTurn = game?.currentTurnPlayer?.id === myPlayer?.id;
 
