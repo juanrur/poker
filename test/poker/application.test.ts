@@ -37,6 +37,12 @@ describe('Poker application test', () => {
     getPlayerById: jest.fn(async playerId => {
       return PlayerMapper.toDomain(players[playerId]) ?? null
     }),
+    getGameByJoinCode: jest.fn(async gameCode => {
+      const playersInGame = Object.values(players)
+      const game = Object.values(games).find(game => game.join_code = gameCode)
+      if(!game) return null
+      return GameMapper.toDomain(playersInGame, game) ?? null
+    })
   } 
   
   let game: Game
@@ -75,7 +81,6 @@ describe('Poker application test', () => {
     const updatedGame = await mockRepository.getGameById(game.id)
     expect(updatedGame?.players).toHaveLength(2)
   })
-
 
   test('street advance', async () => {
 
