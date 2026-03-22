@@ -26,14 +26,14 @@ export default function Players({players, game, myPlayer} : {players: PlayerDTO[
                         </header>
                         <div className="">
                           {
-                            player.cards && myPlayer?.id  === player.id &&
+                            player.cards.length > 0 && myPlayer?.id  === player.id &&
                             <div className="flex gap-2 ">
                               <Card suit={player.cards[0]?.suit} number={player.cards[0]?.value} />
                               <Card suit={player.cards[1]?.suit} number={player.cards[1]?.value} />
                             </div>
                           }
                           {
-                            player.cards && myPlayer?.id !== player.id &&
+                            player.cards.length > 0 && myPlayer?.id !== player.id &&
                             <div className="flex gap-2">
                               <CardReverse />
                               <CardReverse />
