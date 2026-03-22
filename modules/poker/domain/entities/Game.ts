@@ -122,11 +122,11 @@ export class Game {
       count++
     } while (this.players[nextPlayerIndex].isFolded === true)
 
+    // Check is round is over
     if(this.players[nextPlayerIndex].id  === this.dealer?.id && this.roundState === RoundStates.ACTIVE) {
       this.roundState = transition(this.roundState, RoundEvents.ALL_PASSED)
     }
     
-    // Check is round is over
     if(this.roundState === RoundStates.INCREASED && this.players.every(player => (player.bet === this.actualBet || player.isFolded))) {
       this.roundState = transition(this.roundState, RoundEvents.ALL_EQUAL)
     }
