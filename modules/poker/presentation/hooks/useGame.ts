@@ -37,7 +37,7 @@ export function useGame (joinCode: GameDTO['joinCode']) {
     )
 
     return unsubscribe
-  }, [game])
+  }, [game?.id])
 
   function optimisticUI (callback: (game: Game) => Game) {
     if(!game) return
