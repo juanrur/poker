@@ -5,4 +5,5 @@
 - [X] Simplify game ids
 - [ ] Put join code as a value object
 - [ ] Verify in cards constructor that is a good type
-- [ ] Add tests
+- [X] Add tests
+- [ ] fix the bug in which folded players win
