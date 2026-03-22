@@ -7,3 +7,4 @@
 - [ ] Verify in cards constructor that is a good type
 - [X] Add tests
 - [ ] fix the bug in which folded players win
+- [ ] add states creating player, creating game and starting game in their respective hooks
