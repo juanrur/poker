@@ -5,7 +5,7 @@ import { GameDTO } from "../../application/use-cases/dtos/GameDTO";
 import { ActionsDTO } from "@/app/api/games/[game_id]/actions/route";
 import { usePlayer } from "./usePlayer";
 import { GameDTOMapper } from "../../application/mappers/GameDTOMapper";
-import { Raise } from "../../application/use-cases/Raise";
+import { Game } from "../../domain/entities/Game";
 
 export function useGame (joinCode: GameDTO['joinCode']) {
   const [game, setGame] = useState<GameDTO | null>(null)
@@ -39,7 +39,20 @@ export function useGame (joinCode: GameDTO['joinCode']) {
     return unsubscribe
   }, [game])
 
+  function optimisticUI (callback: (game: Game) => Game) {
+    if(!game) return
+    const domainGame = GameDTOMapper.fromDTO(game)
+    const newGame = GameDTOMapper.toDTO(callback(domainGame))
+    setGame(newGame)
+  }
+  
   function raise (amount: number) {
+    optimisticUI(game => {
+      game.raiseCurrentPlayer(amount)
+      game.advanceTurn()
+      return game
+    })
+
     const dto: ActionsDTO = {
       playerToken,
       type: "raise",
@@ -54,6 +67,17 @@ export function useGame (joinCode: GameDTO['joinCode']) {
   }  
 
   function fold () {
+    optimisticUI(game => {
+      game.foldCurrentPlayer()
+      game.advanceTurn()
+
+      if(game.shouldFinishGame()) game.finishGame()
+
+      if (game.shouldAdvanceStreet()) game.advanceStreet()
+        
+      return game
+    })
+
     const dto: ActionsDTO = {
       playerToken,
       type: "fold"
@@ -69,6 +93,16 @@ export function useGame (joinCode: GameDTO['joinCode']) {
   }  
   
   function check () {
+    optimisticUI(game => {   
+      game.advanceTurn()
+      
+      if(game.shouldFinishGame()) game.finishGame()
+
+      if (game.shouldAdvanceStreet()) game.advanceStreet()
+      
+      return game
+    })
+
     const dto: ActionsDTO = {
       playerToken,
       type: "check"
@@ -84,6 +118,18 @@ export function useGame (joinCode: GameDTO['joinCode']) {
   }  
 
   function call () {
+    optimisticUI(game => {   
+      game.callCurrentPlayer()
+  
+      game.advanceTurn()
+
+      if(game.shouldFinishGame()) game.finishGame()
+      
+      if (game.shouldAdvanceStreet()) game.advanceStreet()
+  
+      return game
+    })
+
     const dto: ActionsDTO = {  
       playerToken,
       type: "call"
@@ -99,6 +145,7 @@ export function useGame (joinCode: GameDTO['joinCode']) {
   }
   
   function leave () { 
+    setGame(null)
     fetch(`/api/games/${gameId}/leave`,
       {method: 'DELETE'}
     )
@@ -106,6 +153,13 @@ export function useGame (joinCode: GameDTO['joinCode']) {
   }
 
   function start () {
+    optimisticUI(game => {
+      game.initializeDeck()
+      game.dealCards()
+      game.assignTurnAndDealer()
+      game.postSmallAndBigBlind()
+      return game
+    })
     fetch(`/api/games/${gameId}/start`,
       {method: 'PUT'}
     )

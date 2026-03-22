@@ -3,6 +3,7 @@ import { GameRepository } from "@/modules/poker/domain/repositories/GameReposito
 import { generateCode } from "../../domain/services/GameCodeGenerator";
 import { GameDTOMapper } from "../mappers/GameDTOMapper";
 import { GameDTO } from "./dtos/GameDTO";
+import { randomUUID } from "crypto";
 
 export class CreateGame {
   constructor(private gameRepo: GameRepository) {}
@@ -17,7 +18,8 @@ export class CreateGame {
       if(!game) break
     }
 
-    const game = new Game(code);
+    const id = randomUUID();
+    const game = new Game(code, id);
     const player = await this.gameRepo.getPlayerById(playerId)
     
     if(!player) return null

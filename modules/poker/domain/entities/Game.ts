@@ -18,7 +18,7 @@ export class Game {
   cards: Card[] = [] 
   pot: number = 0
   
-  constructor(readonly joinCode: string, readonly id: string = randomUUID()){}
+  constructor(readonly joinCode: string, readonly id: string){}
 
   addPlayer(player: Player) {
     this.players.push(player);
