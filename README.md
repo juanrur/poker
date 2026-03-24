@@ -43,6 +43,6 @@ Consulta las próximas mejoras aquí:
 ## Más información
 
 Puedes leer la evolución del proyecto en mi portfolio:
-[Artículo completo]([juanruiz.dev/blog/poker](https://juanruiz.dev/blog/poker/))
+[Artículo completo](https://juanruiz.dev/blog/poker/)
 
 
